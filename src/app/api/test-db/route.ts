@@ -22,7 +22,7 @@ export async function GET() {
       await prisma.$queryRaw`SELECT 1 as test`
       dbTest = 'success'
     } catch (error) {
-      dbTest = `error: ${error.message}`
+      dbTest = `error: ${error instanceof Error ? error.message : String(error)}`
     }
 
     return NextResponse.json({
@@ -40,7 +40,7 @@ export async function GET() {
   } catch (error) {
     return NextResponse.json({
       status: 'error',
-      error: error.message,
+      error: error instanceof Error ? error.message : String(error),
       timestamp: new Date().toISOString()
     }, { status: 500 })
   }
