@@ -57,22 +57,32 @@ export async function POST() {
           slug: 'golden-elegance-earrings',
           description: 'Beautiful golden earrings perfect for special occasions',
           price: 2999,
-          category: 'party-wear-earrings',
           images: ['https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=500'],
           isActive: true,
           isFeatured: true,
-          stock: 10
+          stock: 10,
+          category: {
+            connectOrCreate: {
+              where: { slug: 'party-wear-earrings' },
+              create: { name: 'Party Wear Earrings', slug: 'party-wear-earrings' }
+            }
+          }
         },
         {
           name: 'Silver Pearl Necklace',
           slug: 'silver-pearl-necklace',
           description: 'Elegant silver necklace with pearls',
           price: 4999,
-          category: 'casual-necklace',
           images: ['https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=500'],
           isActive: true,
           isFeatured: true,
-          stock: 5
+          stock: 5,
+          category: {
+            connectOrCreate: {
+              where: { slug: 'casual-necklace' },
+              create: { name: 'Casual Necklace', slug: 'casual-necklace' }
+            }
+          }
         }
       ]
 
@@ -85,7 +95,7 @@ export async function POST() {
         data: {
           title: 'Welcome to Ekaashi',
           subtitle: 'Discover Beautiful Jewelry',
-          imageUrl: 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=1200',
+          image: 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=1200',
           isActive: true,
           order: 1
         }
