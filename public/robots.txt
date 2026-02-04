@@ -1,0 +1,11 @@
+# *
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+
+# Host
+Host: https://your-jewelry-store.com
+
+# Sitemaps
+Sitemap: https://your-jewelry-store.com/sitemap.xml
