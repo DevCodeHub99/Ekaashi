@@ -36,6 +36,7 @@ async function getFeaturedProducts() {
     }))
   } catch (error) {
     console.error('Error fetching featured products:', error)
+    // Return empty array if database is not available (e.g., during build)
     return []
   }
 }
@@ -70,6 +71,7 @@ async function getNewArrivals() {
     }))
   } catch (error) {
     console.error('Error fetching new arrivals:', error)
+    // Return empty array if database is not available (e.g., during build)
     return []
   }
 }
@@ -107,6 +109,7 @@ async function getDealsProducts() {
     }))
   } catch (error) {
     console.error('Error fetching deals products:', error)
+    // Return empty array if database is not available (e.g., during build)
     return []
   }
 }
