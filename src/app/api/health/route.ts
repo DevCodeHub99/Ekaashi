@@ -13,7 +13,8 @@ export async function GET(request: NextRequest) {
     
     try {
       const start = Date.now()
-      await prisma.$queryRaw`SELECT 1`
+      // Test MongoDB connection by counting users
+      await prisma.user.count()
       dbLatency = Date.now() - start
     } catch (error) {
       dbStatus = 'unhealthy'

@@ -108,69 +108,96 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.log('About to upsert cart item')
-    // Upsert cart item - handle the unique constraint properly
+    console.log('About to handle cart item')
     let cartItem
     
     if (session) {
       console.log('Using session for logged-in user')
-      // For logged-in users
-      cartItem = await prisma.cartItem.upsert({
-        where: { 
-          user_product_unique: { 
-            userId: session.user.id, 
-            productId 
-          } 
-        },
-        update: {
-          quantity: {
-            increment: quantity
-          }
-        },
-        create: {
-          productId,
-          quantity,
-          userId: session.user.id
-        },
-        include: {
-          product: {
-            include: {
-              category: true
-            }
-          }
+      // For logged-in users - find existing cart item
+      const existingCartItem = await prisma.cartItem.findFirst({
+        where: {
+          userId: session.user.id,
+          productId
         }
       })
+
+      if (existingCartItem) {
+        // Update existing cart item
+        cartItem = await prisma.cartItem.update({
+          where: { id: existingCartItem.id },
+          data: {
+            quantity: existingCartItem.quantity + quantity
+          },
+          include: {
+            product: {
+              include: {
+                category: true
+              }
+            }
+          }
+        })
+      } else {
+        // Create new cart item
+        cartItem = await prisma.cartItem.create({
+          data: {
+            userId: session.user.id,
+            productId,
+            quantity
+          },
+          include: {
+            product: {
+              include: {
+                category: true
+              }
+            }
+          }
+        })
+      }
     } else {
       console.log('Using sessionId for guest user')
-      // For guest users
-      cartItem = await prisma.cartItem.upsert({
-        where: { 
-          session_product_unique: { 
-            sessionId: sessionId!, 
-            productId 
-          } 
-        },
-        update: {
-          quantity: {
-            increment: quantity
-          }
-        },
-        create: {
-          productId,
-          quantity,
-          sessionId: sessionId!
-        },
-        include: {
-          product: {
-            include: {
-              category: true
-            }
-          }
+      // For guest users - find existing cart item
+      const existingCartItem = await prisma.cartItem.findFirst({
+        where: {
+          sessionId: sessionId!,
+          productId
         }
       })
+
+      if (existingCartItem) {
+        // Update existing cart item
+        cartItem = await prisma.cartItem.update({
+          where: { id: existingCartItem.id },
+          data: {
+            quantity: existingCartItem.quantity + quantity
+          },
+          include: {
+            product: {
+              include: {
+                category: true
+              }
+            }
+          }
+        })
+      } else {
+        // Create new cart item
+        cartItem = await prisma.cartItem.create({
+          data: {
+            sessionId: sessionId!,
+            productId,
+            quantity
+          },
+          include: {
+            product: {
+              include: {
+                category: true
+              }
+            }
+          }
+        })
+      }
     }
 
-    console.log('Cart item upserted successfully')
+    console.log('Cart item handled successfully')
 
     const response = {
       success: true,
@@ -219,12 +246,24 @@ export async function PUT(request: NextRequest) {
       )
     }
 
+    // Find the cart item
+    const existingCartItem = await prisma.cartItem.findFirst({
+      where: session 
+        ? { userId: session.user.id, productId }
+        : { sessionId: sessionId!, productId }
+    })
+
+    if (!existingCartItem) {
+      return NextResponse.json(
+        { success: false, error: 'Cart item not found' },
+        { status: 404 }
+      )
+    }
+
     if (quantity <= 0) {
       // If quantity is 0 or negative, remove the item
       await prisma.cartItem.delete({
-        where: session 
-          ? { user_product_unique: { userId: session.user.id, productId } }
-          : { session_product_unique: { sessionId: sessionId!, productId } }
+        where: { id: existingCartItem.id }
       })
 
       return NextResponse.json({
@@ -235,9 +274,7 @@ export async function PUT(request: NextRequest) {
 
     // Update quantity
     const cartItem = await prisma.cartItem.update({
-      where: session 
-        ? { user_product_unique: { userId: session.user.id, productId } }
-        : { session_product_unique: { sessionId: sessionId!, productId } },
+      where: { id: existingCartItem.id },
       data: { quantity },
       include: {
         product: {
@@ -308,12 +345,18 @@ export async function DELETE(request: NextRequest) {
       )
     }
 
-    // Remove specific item
-    await prisma.cartItem.delete({
+    // Find and remove specific item
+    const existingCartItem = await prisma.cartItem.findFirst({
       where: session 
-        ? { user_product_unique: { userId: session.user.id, productId } }
-        : { session_product_unique: { sessionId: sessionId!, productId } }
+        ? { userId: session.user.id, productId }
+        : { sessionId: sessionId!, productId }
     })
+
+    if (existingCartItem) {
+      await prisma.cartItem.delete({
+        where: { id: existingCartItem.id }
+      })
+    }
 
     return NextResponse.json({
       success: true,
