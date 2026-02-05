@@ -41,7 +41,7 @@ A professional, full-featured jewelry e-commerce store built with **Next.js 16**
 ### **Prerequisites**
 - Node.js 18+ 
 - npm or yarn
-- Supabase account (for database)
+- MongoDB Atlas account (for database)
 - Cloudinary account (for images)
 
 ### **Installation**
@@ -93,7 +93,7 @@ Open [http://localhost:3000](http://localhost:3000) to view the application.
 - **bcryptjs** - Password hashing
 
 ### **Database & Storage**
-- **Supabase PostgreSQL** - Managed database
+- **MongoDB Atlas** - Cloud-hosted MongoDB database
 - **Cloudinary** - Image CDN and optimization
 
 ### **Deployment**
@@ -137,7 +137,7 @@ Copy `.env.production.example` to `.env` and update with your values:
 
 ```bash
 # Database
-DATABASE_URL="your-supabase-postgresql-url"
+DATABASE_URL="your-mongodb-atlas-connection-string"
 
 # Authentication
 NEXTAUTH_SECRET="your-secret-key"
@@ -240,7 +240,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - **Next.js Team** for the amazing framework
 - **Vercel** for seamless deployment
-- **Supabase** for managed PostgreSQL
+- **MongoDB** for flexible NoSQL database
 - **Cloudinary** for image optimization
 - **Tailwind CSS** for utility-first styling
 
