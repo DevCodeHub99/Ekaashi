@@ -64,20 +64,20 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
       description: productDescription,
       type: 'website',
       siteName: 'Ekaashi',
-      images: [
+      images: product.images.length > 0 ? [
         {
-          url: '/images/product-placeholder.jpg',
+          url: product.images[0],
           width: 800,
           height: 800,
           alt: product.name,
         },
-      ],
+      ] : [],
     },
     twitter: {
       card: 'summary_large_image',
       title: productTitle,
       description: productDescription,
-      images: ['/images/product-placeholder.jpg'],
+      images: product.images.length > 0 ? [product.images[0]] : [],
     },
     alternates: {
       canonical: `/product/${product.slug}`,

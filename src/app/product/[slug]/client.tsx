@@ -159,7 +159,7 @@ export default function ProductPageClient({ product, relatedProducts }: ProductP
         slug: product.slug,
         price: product.price,
         comparePrice: product.comparePrice,
-        image: product.images[0] || '/images/product-placeholder.jpg',
+        image: product.images[0] || '',
         category: product.category
       }, quantity)
       
@@ -208,7 +208,7 @@ export default function ProductPageClient({ product, relatedProducts }: ProductP
             {/* Main Image */}
             <div className="relative aspect-square bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 rounded-2xl overflow-hidden shadow-lg group">
               <ImageZoom
-                src={product.images?.[selectedImageIndex] || '/images/product-placeholder.jpg'}
+                src={product.images?.[selectedImageIndex] || ''}
                 alt={product.name}
                 className="w-full h-full"
                 zoomScale={3}
@@ -257,7 +257,7 @@ export default function ProductPageClient({ product, relatedProducts }: ProductP
                   onClick={() => setSelectedImageIndex(index)}
                 >
                   <ImageZoom
-                    src={product.images?.[index] || '/images/product-placeholder.jpg'}
+                    src={product.images?.[index] || ''}
                     alt={`${product.name} - Image ${index + 1}`}
                     className="w-full h-full"
                     zoomScale={2}

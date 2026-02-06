@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
       slug: item.product.slug,
       price: Number(item.product.price),
       comparePrice: item.product.comparePrice ? Number(item.product.comparePrice) : undefined,
-      image: item.product.images[0] || '/images/product-placeholder.jpg',
+      image: item.product.images[0] || '',
       category: item.product.category.slug,
       quantity: item.quantity
     }))
@@ -207,7 +207,7 @@ export async function POST(request: NextRequest) {
         slug: cartItem.product.slug,
         price: Number(cartItem.product.price),
         comparePrice: cartItem.product.comparePrice ? Number(cartItem.product.comparePrice) : undefined,
-        image: cartItem.product.images[0] || '/images/product-placeholder.jpg',
+        image: cartItem.product.images[0] || '',
         category: cartItem.product.category.slug,
         quantity: cartItem.quantity
       },
@@ -293,7 +293,7 @@ export async function PUT(request: NextRequest) {
         slug: cartItem.product.slug,
         price: Number(cartItem.product.price),
         comparePrice: cartItem.product.comparePrice ? Number(cartItem.product.comparePrice) : undefined,
-        image: cartItem.product.images[0] || '/images/product-placeholder.jpg',
+        image: cartItem.product.images[0] || '',
         category: cartItem.product.category.slug,
         quantity: cartItem.quantity
       },

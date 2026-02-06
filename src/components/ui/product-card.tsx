@@ -46,7 +46,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         slug: product.slug,
         price: product.price,
         comparePrice: product.comparePrice,
-        image: product.images?.[0] || '/images/product-placeholder.jpg',
+        image: productImage || '',
         category: product.category || 'jewelry'
       })
       
@@ -59,18 +59,25 @@ export default function ProductCard({ product }: ProductCardProps) {
       setIsAdding(false)
     }
   }
+  // Use first image or fallback to elegant placeholder
+  const productImage = product.images?.[0] || ''
+  const hasValidImage = productImage && !productImage.includes('placeholder')
+
   return (
     <div className="group relative bg-white rounded-lg shadow-sm hover:shadow-2xl transition-all duration-500 overflow-hidden border border-gray-100 hover:border-amber-200 w-full flex flex-col h-full">
       <Link href={`/product/${product.slug}`}>
         <div className="aspect-square bg-gray-50 overflow-hidden relative cursor-pointer">
           <ImageZoom
-            src={product.images?.[0] || '/images/product-placeholder.jpg'}
+            src={productImage}
             alt={product.name}
             className="w-full h-full"
             zoomScale={2}
             fallback={
               <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 group-hover:scale-110 transition-transform duration-500">
-                <div className="text-4xl sm:text-5xl lg:text-6xl opacity-70 group-hover:opacity-90 transition-opacity duration-300">💎</div>
+                <div className="text-center">
+                  <div className="text-4xl sm:text-5xl lg:text-6xl opacity-70 group-hover:opacity-90 transition-opacity duration-300 mb-2">💎</div>
+                  <div className="text-xs text-amber-600/60 font-medium px-4">Loading...</div>
+                </div>
               </div>
             }
           >

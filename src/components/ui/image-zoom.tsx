@@ -59,9 +59,15 @@ export default function ImageZoom({
   }, [imageLoaded, imageError])
 
   const handleImageLoad = useCallback(() => {
-    setImageLoaded(true)
-    setImageError(false)
-  }, [])
+    // Only mark as loaded if src is valid
+    if (src && src.trim() !== '' && !src.includes('placeholder')) {
+      setImageLoaded(true)
+      setImageError(false)
+    } else {
+      setImageLoaded(false)
+      setImageError(true)
+    }
+  }, [src])
 
   const handleImageError = useCallback(() => {
     setImageLoaded(false)
@@ -69,7 +75,8 @@ export default function ImageZoom({
   }, [])
 
   // Check if we should show zoom functionality
-  const shouldShowZoom = imageLoaded && !imageError && src && src !== '/images/product-placeholder.jpg'
+  const shouldShowZoom = imageLoaded && !imageError && src && src.trim() !== '' && !src.includes('placeholder')
+  const shouldShowFallback = !src || src.trim() === '' || src.includes('placeholder') || imageError || !imageLoaded
 
   return (
     <div
@@ -85,21 +92,23 @@ export default function ImageZoom({
           isZooming && shouldShowZoom ? 'opacity-0' : 'opacity-100'
         }`}
         style={{
-          backgroundImage: imageLoaded && !imageError ? `url(${src})` : 'none',
+          backgroundImage: imageLoaded && !imageError && src ? `url(${src})` : 'none',
         }}
       >
-        {/* Actual img tag for loading detection and accessibility */}
-        <img 
-          src={src} 
-          alt={alt} 
-          className="w-full h-full object-cover opacity-0" 
-          draggable={false}
-          onLoad={handleImageLoad}
-          onError={handleImageError}
-        />
+        {/* Actual img tag for loading detection and accessibility - only render if src exists */}
+        {src && src.trim() !== '' && !src.includes('placeholder') && (
+          <img 
+            src={src} 
+            alt={alt} 
+            className="w-full h-full object-cover opacity-0" 
+            draggable={false}
+            onLoad={handleImageLoad}
+            onError={handleImageError}
+          />
+        )}
         
-        {/* Fallback content when image fails to load or is placeholder */}
-        {(!imageLoaded || imageError || !src || src === '/images/product-placeholder.jpg') && fallback && (
+        {/* Fallback content when image fails to load or is missing */}
+        {shouldShowFallback && fallback && (
           <div className="absolute inset-0">
             {fallback}
           </div>
