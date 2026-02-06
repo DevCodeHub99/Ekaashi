@@ -22,6 +22,12 @@ export const metadata: Metadata = {
   title: "Ekaashi - Exquisite Earrings, Necklaces & Jewelry Sets",
   description: "Discover Ekaashi's beautiful collection of handcrafted jewelry including party wear earrings, ethnic earrings, casual necklaces, and complete jewelry sets. Premium quality at affordable prices.",
   keywords: "ekaashi, jewelry, earrings, necklaces, jewelry sets, party wear earrings, ethnic earrings, casual earrings, handcrafted jewelry",
+  viewport: {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 5,
+    userScalable: true,
+  },
   openGraph: {
     title: "Ekaashi - Exquisite Earrings, Necklaces & Jewelry Sets",
     description: "Discover Ekaashi's beautiful collection of handcrafted jewelry including party wear earrings, ethnic earrings, casual necklaces, and complete jewelry sets.",
