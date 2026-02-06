@@ -5,6 +5,10 @@ import { prisma } from "@/lib/prisma";
 import ProductCard from "@/components/ui/product-card";
 import Carousel from "@/components/ui/carousel";
 
+// Force dynamic rendering - don't cache this page
+export const dynamic = 'force-dynamic'
+// Or use revalidation: export const revalidate = 60 // Revalidate every 60 seconds
+
 async function getFeaturedProducts() {
   try {
     const products = await prisma.product.findMany({

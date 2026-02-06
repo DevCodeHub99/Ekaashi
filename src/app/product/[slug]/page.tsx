@@ -4,6 +4,9 @@ import { formatPrice } from '@/lib/utils'
 import ProductPageClient from './client'
 import { notFound } from 'next/navigation'
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic'
+
 interface ProductPageProps {
   params: {
     slug: string

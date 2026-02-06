@@ -2,6 +2,9 @@ import { Metadata } from 'next'
 import { prisma } from '@/lib/prisma'
 import ProductCard from '@/components/ui/product-card'
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic'
+
 export const metadata: Metadata = {
   title: 'New Arrivals - Ekaashi',
   description: 'Discover the latest additions to our jewelry collection. Fresh designs in earrings, necklaces, and jewelry sets.',

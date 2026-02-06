@@ -3,6 +3,9 @@ import { notFound } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
 import ProductCard from '@/components/ui/product-card'
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic'
+
 interface CategoryPageProps {
   params: Promise<{ slug: string }>
 }
