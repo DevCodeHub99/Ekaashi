@@ -2,8 +2,8 @@ import { prisma } from '@/lib/prisma'
 import ProductCard from '@/components/ui/product-card'
 import { Metadata } from 'next'
 
-// Force dynamic rendering
-export const dynamic = 'force-dynamic'
+// ISR: Revalidate every 60 seconds
+export const revalidate = 60
 
 export const metadata: Metadata = {
   title: 'All Products - Ekaashi Jewelry Collection',

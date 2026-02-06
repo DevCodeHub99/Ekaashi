@@ -5,9 +5,11 @@ import { prisma } from "@/lib/prisma";
 import ProductCard from "@/components/ui/product-card";
 import Carousel from "@/components/ui/carousel";
 
-// Force dynamic rendering - don't cache this page
-export const dynamic = 'force-dynamic'
-// Or use revalidation: export const revalidate = 60 // Revalidate every 60 seconds
+// ISR: Revalidate every 60 seconds (best practice for e-commerce)
+// - Fast initial load (cached)
+// - Fresh data within 60 seconds
+// - Better UX than force-dynamic
+export const revalidate = 60
 
 async function getFeaturedProducts() {
   try {

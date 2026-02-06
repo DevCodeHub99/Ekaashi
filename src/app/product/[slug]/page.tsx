@@ -4,8 +4,8 @@ import { formatPrice } from '@/lib/utils'
 import ProductPageClient from './client'
 import { notFound } from 'next/navigation'
 
-// Force dynamic rendering
-export const dynamic = 'force-dynamic'
+// ISR: Revalidate every 60 seconds
+export const revalidate = 60
 
 interface ProductPageProps {
   params: {
