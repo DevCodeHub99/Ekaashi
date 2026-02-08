@@ -45,93 +45,98 @@ export async function POST() {
       console.log('Category created:', category.name)
     }
 
-    // Create products - 5 per category
+    // Create products - 5 per category with high-quality images
     const products = [
       // Party Wear Earrings (5 products)
       {
-        name: 'Golden Elegance Earrings',
-        slug: 'golden-elegance-earrings',
-        description: 'Beautiful golden earrings perfect for special occasions and parties',
+        name: 'Golden Elegance Drop Earrings',
+        slug: 'golden-elegance-drop-earrings',
+        description: 'Stunning golden drop earrings with intricate detailing, perfect for weddings and grand celebrations',
         price: 2999,
         comparePrice: 3999,
         images: [
-          'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=500',
-          'https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0?w=500'
+          'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=800&q=80',
+          'https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0?w=800&q=80'
         ],
         categoryId: createdCategories[0].id,
         featured: true,
         inStock: true,
-        seoTitle: 'Golden Elegance Earrings - Party Wear Jewelry',
-        seoDescription: 'Stunning golden earrings perfect for parties and special occasions'
+        seoTitle: 'Golden Elegance Drop Earrings - Party Wear Jewelry',
+        seoDescription: 'Exquisite golden drop earrings perfect for parties and special occasions'
       },
       {
-        name: 'Crystal Drop Earrings',
-        slug: 'crystal-drop-earrings',
-        description: 'Sparkling crystal drop earrings that add glamour to any party outfit',
+        name: 'Crystal Chandelier Earrings',
+        slug: 'crystal-chandelier-earrings',
+        description: 'Sparkling crystal chandelier earrings that add glamour and sophistication to any party outfit',
         price: 3499,
         comparePrice: 4999,
         images: [
-          'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=500'
+          'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=800&q=80',
+          'https://images.unsplash.com/photo-1611652022419-a9419f74343d?w=800&q=80'
         ],
         categoryId: createdCategories[0].id,
         featured: true,
         inStock: true,
-        seoTitle: 'Crystal Drop Earrings - Party Jewelry',
-        seoDescription: 'Glamorous crystal drop earrings for special events'
+        seoTitle: 'Crystal Chandelier Earrings - Glamorous Party Jewelry',
+        seoDescription: 'Dazzling crystal chandelier earrings for special events'
       },
       {
-        name: 'Ruby Chandelier Earrings',
-        slug: 'ruby-chandelier-earrings',
-        description: 'Exquisite ruby chandelier earrings for grand celebrations',
+        name: 'Ruby Statement Earrings',
+        slug: 'ruby-statement-earrings',
+        description: 'Bold ruby statement earrings with gold accents, designed to make you stand out at any celebration',
         price: 5999,
         comparePrice: 7999,
         images: [
-          'https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0?w=500'
+          'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=800&q=80',
+          'https://images.unsplash.com/photo-1506630448388-4e683c67ddb0?w=800&q=80'
         ],
         categoryId: createdCategories[0].id,
         featured: false,
         inStock: true,
-        seoTitle: 'Ruby Chandelier Earrings - Luxury Party Wear',
-        seoDescription: 'Stunning ruby chandelier earrings for grand occasions'
+        seoTitle: 'Ruby Statement Earrings - Luxury Party Wear',
+        seoDescription: 'Stunning ruby statement earrings for grand occasions'
       },
       {
-        name: 'Emerald Statement Earrings',
-        slug: 'emerald-statement-earrings',
-        description: 'Bold emerald statement earrings that make you stand out',
+        name: 'Emerald Teardrop Earrings',
+        slug: 'emerald-teardrop-earrings',
+        description: 'Elegant emerald teardrop earrings with diamond accents, perfect for evening galas',
         price: 4499,
         images: [
-          'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=500'
+          'https://images.unsplash.com/photo-1611591437281-460bfbe1220a?w=800&q=80',
+          'https://images.unsplash.com/photo-1573408301185-9146fe634ad0?w=800&q=80'
         ],
         categoryId: createdCategories[0].id,
         featured: false,
         inStock: true,
-        seoTitle: 'Emerald Statement Earrings - Party Wear',
-        seoDescription: 'Bold and beautiful emerald earrings for parties'
+        seoTitle: 'Emerald Teardrop Earrings - Evening Party Wear',
+        seoDescription: 'Elegant emerald earrings for sophisticated events'
       },
       {
-        name: 'Pearl Cluster Earrings',
-        slug: 'pearl-cluster-earrings',
-        description: 'Elegant pearl cluster earrings for sophisticated evening events',
+        name: 'Pearl Cluster Party Earrings',
+        slug: 'pearl-cluster-party-earrings',
+        description: 'Luxurious pearl cluster earrings with gold setting, ideal for weddings and formal events',
         price: 3999,
         comparePrice: 5499,
         images: [
-          'https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0?w=500'
+          'https://images.unsplash.com/photo-1535556116002-6281ff3e9f36?w=800&q=80',
+          'https://images.unsplash.com/photo-1589128777073-263566ae5e4d?w=800&q=80'
         ],
         categoryId: createdCategories[0].id,
         featured: true,
         inStock: true,
-        seoTitle: 'Pearl Cluster Earrings - Evening Wear',
-        seoDescription: 'Sophisticated pearl cluster earrings for elegant events'
+        seoTitle: 'Pearl Cluster Party Earrings - Wedding Jewelry',
+        seoDescription: 'Luxurious pearl cluster earrings for elegant events'
       },
 
       // Ethnic Earrings (5 products)
       {
         name: 'Traditional Jhumka Earrings',
         slug: 'traditional-jhumka-earrings',
-        description: 'Classic Indian jhumka earrings with intricate designs',
+        description: 'Classic Indian jhumka earrings with intricate meenakari work and pearl drops',
         price: 1999,
         images: [
-          'https://images.unsplash.com/photo-1611652022419-a9419f74343d?w=500'
+          'https://images.unsplash.com/photo-1611652022419-a9419f74343d?w=800&q=80',
+          'https://images.unsplash.com/photo-1603561591411-07134e71a2a9?w=800&q=80'
         ],
         categoryId: createdCategories[1].id,
         featured: true,
@@ -142,11 +147,12 @@ export async function POST() {
       {
         name: 'Kundan Chandbali Earrings',
         slug: 'kundan-chandbali-earrings',
-        description: 'Exquisite kundan chandbali earrings with traditional craftsmanship',
+        description: 'Exquisite kundan chandbali earrings with traditional craftsmanship and pearl detailing',
         price: 2499,
         comparePrice: 3499,
         images: [
-          'https://images.unsplash.com/photo-1611652022419-a9419f74343d?w=500'
+          'https://images.unsplash.com/photo-1602173574767-37ac01994b2a?w=800&q=80',
+          'https://images.unsplash.com/photo-1611591437281-460bfbe1220a?w=800&q=80'
         ],
         categoryId: createdCategories[1].id,
         featured: true,
@@ -157,10 +163,11 @@ export async function POST() {
       {
         name: 'Temple Jewelry Earrings',
         slug: 'temple-jewelry-earrings',
-        description: 'Sacred temple jewelry earrings with divine motifs',
+        description: 'Sacred temple jewelry earrings with divine motifs and antique gold finish',
         price: 2999,
         images: [
-          'https://images.unsplash.com/photo-1611652022419-a9419f74343d?w=500'
+          'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=800&q=80',
+          'https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0?w=800&q=80'
         ],
         categoryId: createdCategories[1].id,
         featured: false,
@@ -171,11 +178,12 @@ export async function POST() {
       {
         name: 'Meenakari Jhumka',
         slug: 'meenakari-jhumka',
-        description: 'Colorful meenakari jhumka with vibrant enamel work',
+        description: 'Colorful meenakari jhumka with vibrant enamel work and traditional bell shape',
         price: 2199,
         comparePrice: 2999,
         images: [
-          'https://images.unsplash.com/photo-1611652022419-a9419f74343d?w=500'
+          'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=800&q=80',
+          'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=800&q=80'
         ],
         categoryId: createdCategories[1].id,
         featured: false,
@@ -184,17 +192,18 @@ export async function POST() {
         seoDescription: 'Vibrant meenakari jhumka with beautiful enamel work'
       },
       {
-        name: 'Antique Gold Earrings',
-        slug: 'antique-gold-earrings',
-        description: 'Vintage-inspired antique gold earrings with ethnic charm',
+        name: 'Antique Gold Ethnic Earrings',
+        slug: 'antique-gold-ethnic-earrings',
+        description: 'Vintage-inspired antique gold earrings with ethnic charm and oxidized finish',
         price: 1799,
         images: [
-          'https://images.unsplash.com/photo-1611652022419-a9419f74343d?w=500'
+          'https://images.unsplash.com/photo-1506630448388-4e683c67ddb0?w=800&q=80',
+          'https://images.unsplash.com/photo-1573408301185-9146fe634ad0?w=800&q=80'
         ],
         categoryId: createdCategories[1].id,
         featured: true,
         inStock: true,
-        seoTitle: 'Antique Gold Earrings - Vintage Ethnic Jewelry',
+        seoTitle: 'Antique Gold Ethnic Earrings - Vintage Jewelry',
         seoDescription: 'Beautiful antique gold earrings with traditional appeal'
       },
 
@@ -202,10 +211,11 @@ export async function POST() {
       {
         name: 'Diamond Stud Earrings',
         slug: 'diamond-stud-earrings',
-        description: 'Simple yet elegant diamond stud earrings for everyday wear',
+        description: 'Simple yet elegant diamond stud earrings perfect for everyday wear and office',
         price: 3499,
         images: [
-          'https://images.unsplash.com/photo-1506630448388-4e683c67ddb0?w=500'
+          'https://images.unsplash.com/photo-1506630448388-4e683c67ddb0?w=800&q=80',
+          'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=800&q=80'
         ],
         categoryId: createdCategories[2].id,
         featured: true,
@@ -216,10 +226,11 @@ export async function POST() {
       {
         name: 'Silver Hoop Earrings',
         slug: 'silver-hoop-earrings',
-        description: 'Classic silver hoop earrings for everyday style',
+        description: 'Classic silver hoop earrings with polished finish for everyday style',
         price: 1299,
         images: [
-          'https://images.unsplash.com/photo-1506630448388-4e683c67ddb0?w=500'
+          'https://images.unsplash.com/photo-1535556116002-6281ff3e9f36?w=800&q=80',
+          'https://images.unsplash.com/photo-1611652022419-a9419f74343d?w=800&q=80'
         ],
         categoryId: createdCategories[2].id,
         featured: false,
@@ -228,27 +239,29 @@ export async function POST() {
         seoDescription: 'Stylish silver hoop earrings for everyday fashion'
       },
       {
-        name: 'Rose Gold Studs',
-        slug: 'rose-gold-studs',
-        description: 'Delicate rose gold stud earrings for a subtle look',
+        name: 'Rose Gold Minimalist Studs',
+        slug: 'rose-gold-minimalist-studs',
+        description: 'Delicate rose gold stud earrings with minimalist design for a subtle look',
         price: 1599,
         comparePrice: 2199,
         images: [
-          'https://images.unsplash.com/photo-1506630448388-4e683c67ddb0?w=500'
+          'https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0?w=800&q=80',
+          'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=800&q=80'
         ],
         categoryId: createdCategories[2].id,
         featured: true,
         inStock: true,
-        seoTitle: 'Rose Gold Studs - Minimalist Earrings',
+        seoTitle: 'Rose Gold Minimalist Studs - Simple Earrings',
         seoDescription: 'Elegant rose gold stud earrings for daily wear'
       },
       {
         name: 'Geometric Drop Earrings',
         slug: 'geometric-drop-earrings',
-        description: 'Modern geometric drop earrings for contemporary style',
+        description: 'Modern geometric drop earrings with contemporary design for trendy style',
         price: 1899,
         images: [
-          'https://images.unsplash.com/photo-1506630448388-4e683c67ddb0?w=500'
+          'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=800&q=80',
+          'https://images.unsplash.com/photo-1611591437281-460bfbe1220a?w=800&q=80'
         ],
         categoryId: createdCategories[2].id,
         featured: false,
@@ -259,10 +272,11 @@ export async function POST() {
       {
         name: 'Pearl Stud Earrings',
         slug: 'pearl-stud-earrings',
-        description: 'Timeless pearl stud earrings for classic elegance',
+        description: 'Timeless pearl stud earrings with classic elegance for any occasion',
         price: 2299,
         images: [
-          'https://images.unsplash.com/photo-1506630448388-4e683c67ddb0?w=500'
+          'https://images.unsplash.com/photo-1589128777073-263566ae5e4d?w=800&q=80',
+          'https://images.unsplash.com/photo-1602173574767-37ac01994b2a?w=800&q=80'
         ],
         categoryId: createdCategories[2].id,
         featured: true,
@@ -275,12 +289,12 @@ export async function POST() {
       {
         name: 'Silver Pearl Necklace',
         slug: 'silver-pearl-necklace',
-        description: 'Elegant silver necklace with beautiful pearls for a sophisticated look',
+        description: 'Elegant silver necklace with beautiful freshwater pearls for a sophisticated look',
         price: 4999,
         comparePrice: 6999,
         images: [
-          'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=500',
-          'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=500'
+          'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=800&q=80',
+          'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=800&q=80'
         ],
         categoryId: createdCategories[3].id,
         featured: true,
@@ -291,10 +305,11 @@ export async function POST() {
       {
         name: 'Gold Chain Necklace',
         slug: 'gold-chain-necklace',
-        description: 'Simple gold chain necklace perfect for layering',
+        description: 'Simple gold chain necklace with delicate links, perfect for layering',
         price: 3499,
         images: [
-          'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=500'
+          'https://images.unsplash.com/photo-1611652022419-a9419f74343d?w=800&q=80',
+          'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=800&q=80'
         ],
         categoryId: createdCategories[3].id,
         featured: false,
@@ -303,27 +318,29 @@ export async function POST() {
         seoDescription: 'Elegant gold chain necklace for everyday wear'
       },
       {
-        name: 'Pendant Necklace',
-        slug: 'pendant-necklace',
-        description: 'Delicate pendant necklace with heart charm',
+        name: 'Heart Pendant Necklace',
+        slug: 'heart-pendant-necklace',
+        description: 'Delicate pendant necklace with heart charm and sparkling stones',
         price: 2999,
         comparePrice: 3999,
         images: [
-          'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=500'
+          'https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0?w=800&q=80',
+          'https://images.unsplash.com/photo-1506630448388-4e683c67ddb0?w=800&q=80'
         ],
         categoryId: createdCategories[3].id,
         featured: true,
         inStock: true,
-        seoTitle: 'Pendant Necklace - Heart Charm Jewelry',
+        seoTitle: 'Heart Pendant Necklace - Romantic Jewelry',
         seoDescription: 'Beautiful pendant necklace with heart charm'
       },
       {
         name: 'Layered Chain Necklace',
         slug: 'layered-chain-necklace',
-        description: 'Trendy layered chain necklace for modern style',
+        description: 'Trendy layered chain necklace with multiple strands for modern style',
         price: 3799,
         images: [
-          'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=500'
+          'https://images.unsplash.com/photo-1535556116002-6281ff3e9f36?w=800&q=80',
+          'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=800&q=80'
         ],
         categoryId: createdCategories[3].id,
         featured: false,
@@ -334,10 +351,11 @@ export async function POST() {
       {
         name: 'Bar Necklace',
         slug: 'bar-necklace',
-        description: 'Minimalist bar necklace for subtle elegance',
+        description: 'Minimalist bar necklace with sleek design for subtle elegance',
         price: 2499,
         images: [
-          'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=500'
+          'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=800&q=80',
+          'https://images.unsplash.com/photo-1611591437281-460bfbe1220a?w=800&q=80'
         ],
         categoryId: createdCategories[3].id,
         featured: true,
@@ -350,12 +368,13 @@ export async function POST() {
       {
         name: 'Bridal Jewelry Set',
         slug: 'bridal-jewelry-set',
-        description: 'Complete bridal jewelry set with necklace, earrings, and maang tikka',
+        description: 'Complete bridal jewelry set with necklace, earrings, maang tikka, and bangles',
         price: 15999,
         comparePrice: 19999,
         images: [
-          'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=500',
-          'https://images.unsplash.com/photo-1611652022419-a9419f74343d?w=500'
+          'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=800&q=80',
+          'https://images.unsplash.com/photo-1611652022419-a9419f74343d?w=800&q=80',
+          'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=800&q=80'
         ],
         categoryId: createdCategories[4].id,
         featured: true,
@@ -366,11 +385,12 @@ export async function POST() {
       {
         name: 'Party Wear Jewelry Set',
         slug: 'party-wear-jewelry-set',
-        description: 'Glamorous jewelry set with necklace and earrings for parties',
+        description: 'Glamorous jewelry set with statement necklace and matching earrings for parties',
         price: 8999,
         comparePrice: 11999,
         images: [
-          'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=500'
+          'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=800&q=80',
+          'https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0?w=800&q=80'
         ],
         categoryId: createdCategories[4].id,
         featured: true,
@@ -381,10 +401,11 @@ export async function POST() {
       {
         name: 'Traditional Jewelry Set',
         slug: 'traditional-jewelry-set',
-        description: 'Ethnic jewelry set with necklace, earrings, and bangles',
+        description: 'Ethnic jewelry set with necklace, earrings, and bangles in antique gold',
         price: 12999,
         images: [
-          'https://images.unsplash.com/photo-1611652022419-a9419f74343d?w=500'
+          'https://images.unsplash.com/photo-1611652022419-a9419f74343d?w=800&q=80',
+          'https://images.unsplash.com/photo-1602173574767-37ac01994b2a?w=800&q=80'
         ],
         categoryId: createdCategories[4].id,
         featured: false,
@@ -395,11 +416,12 @@ export async function POST() {
       {
         name: 'Pearl Jewelry Set',
         slug: 'pearl-jewelry-set',
-        description: 'Elegant pearl jewelry set with necklace and earrings',
+        description: 'Elegant pearl jewelry set with necklace and earrings in silver setting',
         price: 9999,
         comparePrice: 12999,
         images: [
-          'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=500'
+          'https://images.unsplash.com/photo-1589128777073-263566ae5e4d?w=800&q=80',
+          'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=800&q=80'
         ],
         categoryId: createdCategories[4].id,
         featured: true,
@@ -414,7 +436,8 @@ export async function POST() {
         price: 24999,
         comparePrice: 29999,
         images: [
-          'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=500'
+          'https://images.unsplash.com/photo-1506630448388-4e683c67ddb0?w=800&q=80',
+          'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=800&q=80'
         ],
         categoryId: createdCategories[4].id,
         featured: true,

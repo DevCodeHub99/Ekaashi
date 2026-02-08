@@ -1,113 +1,88 @@
 # 💎 Ekaashi Jewelry Store
 
-A professional, full-featured jewelry e-commerce store built with **Next.js 16** and modern web technologies. Ready for production deployment with complete admin management system.
+A modern, production-ready jewelry e-commerce platform built with **Next.js 14** and industry-standard practices. Features complete admin management, shopping cart, checkout, and 25 curated products across 5 categories.
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/your-username/ekaashi-jewelry-store)
+## ✨ Features
 
-## ✨ **Features**
+### Customer Features
+- 25 curated products across 5 jewelry categories
+- Shopping cart with persistent storage
+- Guest and registered user checkout
+- Order tracking and history
+- User authentication (NextAuth.js)
+- Profile management
 
-### 🛒 **E-commerce Functionality**
-- **25 Products** across 5 jewelry categories
-- **Shopping Cart** with persistent storage
-- **Complete Checkout Flow** for guest and registered users
-- **Order Management** with status tracking
-- **User Authentication** with NextAuth.js
-- **User Profiles** with email/password updates
+### Admin Dashboard
+- Product management (CRUD operations)
+- Order management and status updates
+- Banner management for homepage
+- Abandoned cart tracking
+- Image upload via Cloudinary
 
-### 🎨 **Design & UX**
-- **Mobile-First Responsive** design
-- **Ekaashi Brand Colors** (warm amber/gold palette)
-- **Professional UI** with Tailwind CSS
-- **Image Optimization** via Cloudinary CDN
-- **SEO Optimized** with structured data
+### Technical Features
+- Mobile-first responsive design
+- Client-side data fetching (like Amazon/Shopify)
+- SEO optimized with structured data
+- Image optimization and CDN
+- TypeScript for type safety
+- Tailwind CSS for styling
 
-### 🔧 **Admin Dashboard**
-- **Product Management** - Add, edit, delete products
-- **Order Management** - Track and update order status
-- **Banner Management** - Dynamic homepage banners
-- **User Management** - View customer orders
-- **Analytics Dashboard** - Sales and performance metrics
+## 🚀 Quick Start
 
-### ⚡ **Performance & Scalability**
-- **Next.js 16** with App Router and Turbopack
-- **Server-Side Rendering** for optimal SEO
-- **Static Generation** for fast loading
-- **Caching Strategy** with TTL
-- **Rate Limiting** for API protection
-- **Health Monitoring** with `/api/health`
+### Prerequisites
+- Node.js 18+
+- MongoDB Atlas account
+- Cloudinary account (optional, for image uploads)
 
-## 🚀 **Quick Start**
-
-### **Prerequisites**
-- Node.js 18+ 
-- npm or yarn
-- MongoDB Atlas account (for database)
-- Cloudinary account (for images)
-
-### **Installation**
+### Installation
 
 ```bash
-# Clone the repository
-git clone https://github.com/your-username/ekaashi-jewelry-store.git
-cd ekaashi-jewelry-store
-
 # Install dependencies
 npm install
 
 # Set up environment variables
-cp .env.production.example .env
-# Edit .env with your actual values
+cp .env.example .env
+# Edit .env with your MongoDB connection string
 
-# Run database migrations
-npx prisma db push
+# Generate Prisma client
+npx prisma generate
 
 # Start development server
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) to view the application.
+Visit [http://localhost:3000](http://localhost:3000)
 
-## 🌐 **Live Demo**
+### Seed Database
 
-- **Website**: [https://ekaashi-jewelry-store.vercel.app](https://ekaashi-jewelry-store.vercel.app)
-- **Admin Panel**: [/admin](https://ekaashi-jewelry-store.vercel.app/admin)
-- **Health Check**: [/api/health](https://ekaashi-jewelry-store.vercel.app/api/health)
+Visit `/seed` page and click "Seed Database" button, or run:
 
-**Admin Credentials**:
-- Email: `admin@ekaashi.com`
-- Password: `admin123`
+```bash
+curl -X POST http://localhost:3000/api/seed-mongodb
+```
 
-## 🛠️ **Tech Stack**
+This creates:
+- 1 admin user (admin@ekaashi.com / admin123)
+- 5 categories
+- 25 products with high-quality images
+- 2 homepage banners
 
-### **Frontend**
-- **Next.js 16** - React framework with App Router
-- **TypeScript** - Type-safe development
-- **Tailwind CSS** - Utility-first styling
-- **Lucide React** - Beautiful icons
-- **React Hook Form** - Form management
+## 🌐 Live Demo
 
-### **Backend**
-- **Next.js API Routes** - Serverless functions
-- **Prisma ORM** - Type-safe database queries
-- **NextAuth.js** - Authentication system
-- **bcryptjs** - Password hashing
+- **Website**: https://ekaashi-com.vercel.app
+- **Admin Panel**: https://ekaashi-com.vercel.app/admin
+- **Credentials**: admin@ekaashi.com / admin123
 
-### **Database & Storage**
-- **MongoDB Atlas** - Cloud-hosted MongoDB database
-- **Cloudinary** - Image CDN and optimization
+## 🛠️ Tech Stack
 
-### **Deployment**
-- **Vercel** - Optimized for Next.js
-- **GitHub** - Version control
-- **Environment Variables** - Secure configuration
-
-## 📊 **Performance**
-
-- **Build Time**: ~3 seconds
-- **35 Static Pages** generated
-- **16 API Routes** active
-- **Lighthouse Score**: 90+ (Performance, SEO, Accessibility)
-- **Traffic Capacity**: 1,000+ concurrent users
+- **Framework**: Next.js 14 (App Router)
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS
+- **Database**: MongoDB with Prisma ORM
+- **Authentication**: NextAuth.js
+- **Image Hosting**: Cloudinary
+- **Deployment**: Vercel
+- **Icons**: Lucide React
 
 ## 🗂️ **Project Structure**
 
@@ -131,128 +106,56 @@ src/
 └── types/                # TypeScript definitions
 ```
 
-## 🔧 **Environment Variables**
+## 🔧 Environment Variables
 
-Copy `.env.production.example` to `.env` and update with your values:
+Create `.env` file in the root directory:
 
 ```bash
-# Database
-DATABASE_URL="your-mongodb-atlas-connection-string"
+# Database (Required)
+DATABASE_URL="mongodb+srv://username:password@cluster.mongodb.net/database"
 
-# Authentication
-NEXTAUTH_SECRET="your-secret-key"
+# Authentication (Required)
+NEXTAUTH_SECRET="generate-with-openssl-rand-base64-32"
 NEXTAUTH_URL="http://localhost:3000"
 
-# Cloudinary
+# Cloudinary (Optional - for image uploads)
 CLOUDINARY_CLOUD_NAME="your-cloud-name"
 CLOUDINARY_API_KEY="your-api-key"
 CLOUDINARY_API_SECRET="your-api-secret"
 NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME="your-cloud-name"
-
-# Admin
-ADMIN_EMAIL="admin@ekaashi.com"
-ADMIN_PASSWORD="your-admin-password"
 ```
 
-## 🚀 **Deployment**
+## 🚀 Deployment to Vercel
 
-### **Deploy to Vercel (Recommended)**
+1. Push code to GitHub
+2. Import project in Vercel
+3. Add environment variables in Vercel dashboard
+4. Deploy
+5. Visit `/seed` to populate database
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/your-username/ekaashi-jewelry-store)
-
-Or manually:
+## 📝 Available Scripts
 
 ```bash
-# Install Vercel CLI
-npm install -g vercel
-
-# Deploy
-vercel --prod
+npm run dev      # Start development server
+npm run build    # Build for production
+npm start        # Start production server
+npm run lint     # Run ESLint
 ```
 
-### **Environment Variables in Vercel**
-1. Go to **Vercel Dashboard** → **Settings** → **Environment Variables**
-2. Add all variables from `.env.production.example`
-3. Update `NEXTAUTH_URL` with your Vercel deployment URL
+## 📚 Documentation
 
-See [VERCEL_DEPLOYMENT_GUIDE.md](./VERCEL_DEPLOYMENT_GUIDE.md) for detailed instructions.
+- **CODEBASE_STANDARDS.md** - Architecture and best practices
+- **INDUSTRY_STANDARD_SOLUTION.md** - Data fetching strategy
+- **SEED_COMPLETE.md** - Database seeding details
 
-## 📝 **Available Scripts**
+## 🔒 Security
 
-```bash
-npm run dev          # Start development server
-npm run build        # Build for production
-npm run start        # Start production server
-npm run lint         # Run ESLint
-npm run type-check   # Check TypeScript types
-npm run deploy       # Deploy to Vercel
-```
-
-## 🧪 **Testing**
-
-### **Manual Testing Checklist**
-- [ ] User registration and login
-- [ ] Product browsing and search
-- [ ] Add to cart functionality
-- [ ] Checkout process (guest and registered)
-- [ ] Order placement and tracking
-- [ ] Admin product management
-- [ ] Admin order management
-- [ ] Image uploads
-- [ ] Mobile responsiveness
-
-### **API Health Check**
-Visit `/api/health` to verify:
-- Database connection
-- Environment variables
-- System status
-
-## 🔒 **Security Features**
-
-- **Password Hashing** with bcryptjs
-- **Session Management** with NextAuth.js
-- **Input Validation** on all forms
-- **Rate Limiting** on API routes
-- **HTTPS Enforcement** in production
-- **Environment Variable Protection**
-
-## 📈 **Scalability**
-
-The application is designed to handle:
-- **1,000+ concurrent users**
-- **50,000+ daily page views**
-- **500+ orders per day**
-- **Horizontal scaling** with Vercel's infrastructure
-
-## 🤝 **Contributing**
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 📄 **License**
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 **Acknowledgments**
-
-- **Next.js Team** for the amazing framework
-- **Vercel** for seamless deployment
-- **MongoDB** for flexible NoSQL database
-- **Cloudinary** for image optimization
-- **Tailwind CSS** for utility-first styling
-
-## 📞 **Support**
-
-For support and questions:
-- **GitHub Issues**: [Create an issue](https://github.com/your-username/ekaashi-jewelry-store/issues)
-- **Documentation**: Check the `/docs` folder
-- **Health Check**: Visit `/api/health` for system status
+- Password hashing with bcryptjs (12 rounds)
+- JWT-based session management
+- Input validation on all forms
+- Environment variable protection
+- HTTPS enforcement in production
 
 ---
 
-**Built with ❤️ for the jewelry industry**
-
-**Ready for production • Scalable • Secure • Fast**
+**Built with industry-standard practices • Production-ready • Fully responsive**
