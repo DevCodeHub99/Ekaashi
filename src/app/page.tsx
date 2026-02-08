@@ -1,129 +1,12 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Star, Shield, Truck, HeartHandshake } from "lucide-react";
-import { prisma } from "@/lib/prisma";
-import ProductCard from "@/components/ui/product-card";
 import Carousel from "@/components/ui/carousel";
+import ProductGrid from "@/components/products/ProductGrid";
 
-// ISR: Revalidate every 60 seconds (best practice for e-commerce)
-// - Fast initial load (cached)
-// - Fresh data within 60 seconds
-// - Better UX than force-dynamic
-export const revalidate = 60
-
-async function getFeaturedProducts() {
-  try {
-    const products = await prisma.product.findMany({
-      where: {
-        featured: true,
-        inStock: true
-      },
-      include: {
-        category: true
-      },
-      take: 8,
-      orderBy: {
-        createdAt: 'desc'
-      }
-    })
-
-    return products.map(product => ({
-      id: product.id,
-      name: product.name,
-      slug: product.slug,
-      description: product.description || '',
-      price: Number(product.price),
-      comparePrice: product.comparePrice ? Number(product.comparePrice) : undefined,
-      images: product.images,
-      category: product.category.slug,
-      categoryName: product.category.name,
-      inStock: product.inStock,
-      featured: product.featured
-    }))
-  } catch (error) {
-    console.error('Error fetching featured products:', error)
-    // Return empty array if database is not available (e.g., during build)
-    return []
-  }
-}
-
-async function getNewArrivals() {
-  try {
-    const products = await prisma.product.findMany({
-      where: {
-        inStock: true
-      },
-      include: {
-        category: true
-      },
-      take: 4,
-      orderBy: {
-        createdAt: 'desc'
-      }
-    })
-
-    return products.map(product => ({
-      id: product.id,
-      name: product.name,
-      slug: product.slug,
-      description: product.description || '',
-      price: Number(product.price),
-      comparePrice: product.comparePrice ? Number(product.comparePrice) : undefined,
-      images: product.images,
-      category: product.category.slug,
-      categoryName: product.category.name,
-      inStock: product.inStock,
-      featured: product.featured
-    }))
-  } catch (error) {
-    console.error('Error fetching new arrivals:', error)
-    // Return empty array if database is not available (e.g., during build)
-    return []
-  }
-}
-
-async function getDealsProducts() {
-  try {
-    const products = await prisma.product.findMany({
-      where: {
-        comparePrice: {
-          not: null
-        },
-        inStock: true
-      },
-      include: {
-        category: true
-      },
-      take: 4,
-      orderBy: {
-        createdAt: 'desc'
-      }
-    })
-
-    return products.map(product => ({
-      id: product.id,
-      name: product.name,
-      slug: product.slug,
-      description: product.description || '',
-      price: Number(product.price),
-      comparePrice: product.comparePrice ? Number(product.comparePrice) : undefined,
-      images: product.images,
-      category: product.category.slug,
-      categoryName: product.category.name,
-      inStock: product.inStock,
-      featured: product.featured
-    }))
-  } catch (error) {
-    console.error('Error fetching deals products:', error)
-    // Return empty array if database is not available (e.g., during build)
-    return []
-  }
-}
-
-export default async function Home() {
-  const featuredProducts = await getFeaturedProducts()
-  const newArrivals = await getNewArrivals()
-  const dealsProducts = await getDealsProducts()
+// Static page - no server-side data fetching
+// Products load client-side for always-fresh data
+export default function Home() {
 
   return (
     <div className="flex flex-col">
@@ -150,11 +33,10 @@ export default async function Home() {
           </div>
 
           {/* New Arrivals Grid - 2 products per row on mobile */}
-          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8 mb-8 sm:mb-12">
-            {newArrivals.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
+          <ProductGrid 
+            endpoint="/api/products/new-arrivals"
+            limit={4}
+          />
 
           {/* View All New Arrivals Button */}
           <div className="text-center">
@@ -442,11 +324,10 @@ export default async function Home() {
           </div>
 
           {/* Deal Products Grid - Show products with comparePrice (sale items) - 2 products per row on mobile */}
-          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8 mb-8 sm:mb-12">
-            {dealsProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
+          <ProductGrid 
+            endpoint="/api/products/deals"
+            limit={4}
+          />
 
           {/* View All Deals Button */}
           <div className="text-center">
@@ -475,13 +356,12 @@ export default async function Home() {
             </p>
           </div>
           
-          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8 mb-12 sm:mb-16">
-            {featuredProducts.slice(0, 4).map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
+          <ProductGrid 
+            endpoint="/api/products/featured"
+            limit={4}
+          />
           
-          <div className="text-center">
+          <div className="text-center mt-12 sm:mt-16">
             <Button asChild className="bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white px-12 py-4 rounded-none font-medium text-lg tracking-wide shadow-lg hover:shadow-xl transition-all duration-300">
               <Link href="/products">
                 EXPLORE FULL COLLECTION

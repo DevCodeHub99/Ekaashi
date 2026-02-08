@@ -21,9 +21,19 @@ export default function SeedPage() {
       const result = await response.json()
       
       if (result.success) {
-        setStatus('success')
-        setMessage('✅ Database seeded successfully!')
-        setData(result.counts)
+        setMessage('✅ Database seeded! Clearing cache...')
+        
+        // Clear ISR cache so pages show fresh data
+        try {
+          await fetch('/api/revalidate', { method: 'POST' })
+          setStatus('success')
+          setMessage('✅ Database seeded and cache cleared! Products will now load.')
+          setData(result.counts)
+        } catch (cacheError) {
+          setStatus('success')
+          setMessage('✅ Database seeded! (Cache will clear in 60 seconds)')
+          setData(result.counts)
+        }
       } else {
         setStatus('error')
         setMessage('❌ Seeding failed: ' + (result.error || 'Unknown error'))
@@ -77,6 +87,28 @@ export default function SeedPage() {
     }
   }
 
+  const handleClearCache = async () => {
+    setStatus('loading')
+    setMessage('Clearing ISR cache...')
+    
+    try {
+      const response = await fetch('/api/revalidate', { method: 'POST' })
+      const result = await response.json()
+      
+      if (result.success) {
+        setStatus('success')
+        setMessage('✅ Cache cleared! Refresh homepage to see products.')
+        setData(result.revalidated)
+      } else {
+        setStatus('error')
+        setMessage('❌ Error clearing cache')
+      }
+    } catch (error) {
+      setStatus('error')
+      setMessage('❌ Error: ' + (error instanceof Error ? error.message : String(error)))
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 py-12">
       <div className="container mx-auto px-4 max-w-2xl">
@@ -111,6 +143,14 @@ export default function SeedPage() {
               className="w-full bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white py-6 text-lg font-bold"
             >
               3️⃣ Seed Database (25 Products)
+            </Button>
+
+            <Button
+              onClick={handleClearCache}
+              disabled={status === 'loading'}
+              className="w-full bg-green-600 hover:bg-green-700 text-white py-6 text-lg font-bold"
+            >
+              4️⃣ Clear Cache (Force Refresh)
             </Button>
           </div>
 
