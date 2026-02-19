@@ -100,7 +100,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     
     // Validate required fields
-    const requiredFields = ['name', 'description', 'price', 'categoryId']
+    const requiredFields = ['name', 'description', 'price', 'categoryId', 'sku']
     for (const field of requiredFields) {
       if (!body[field]) {
         return NextResponse.json(
@@ -108,6 +108,18 @@ export async function POST(request: NextRequest) {
           { status: 400 }
         )
       }
+    }
+
+    // Check if SKU already exists
+    const existingSku = await prisma.product.findUnique({
+      where: { sku: body.sku }
+    })
+
+    if (existingSku) {
+      return NextResponse.json(
+        { success: false, error: 'SKU already exists' },
+        { status: 400 }
+      )
     }
 
     // Generate slug
@@ -118,10 +130,16 @@ export async function POST(request: NextRequest) {
       data: {
         name: body.name,
         slug: slug,
+        sku: body.sku,
         description: body.description,
+        specifications: body.specifications || null,
+        careInstructions: body.careInstructions || null,
         price: parseFloat(body.price),
         comparePrice: body.comparePrice ? parseFloat(body.comparePrice) : null,
         images: body.images && body.images.length > 0 ? body.images : [],
+        color: body.color || null,
+        size: body.size || null,
+        material: body.material || null,
         categoryId: body.categoryId,
         inStock: body.inStock !== false,
         featured: body.featured || false,
@@ -138,6 +156,7 @@ export async function POST(request: NextRequest) {
       id: newProduct.id,
       name: newProduct.name,
       slug: newProduct.slug,
+      sku: newProduct.sku,
       description: newProduct.description,
       price: Number(newProduct.price),
       comparePrice: newProduct.comparePrice ? Number(newProduct.comparePrice) : undefined,

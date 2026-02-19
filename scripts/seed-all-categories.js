@@ -1,31 +1,12 @@
-import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+const { PrismaClient } = require('@prisma/client')
 
-export async function POST() {
+const prisma = new PrismaClient()
+
+async function seedAllCategories() {
   try {
-    console.log('Starting MongoDB database seeding...')
+    console.log('🌱 Starting complete category and product seeding...\n')
 
-    // Test connection
-    await prisma.$connect()
-    console.log('MongoDB connected successfully')
-
-    // Create admin user
-    const bcrypt = await import('bcryptjs')
-    const adminPassword = await bcrypt.hash('admin123', 12)
-
-    const adminUser = await prisma.user.upsert({
-      where: { email: 'admin@ekaashi.com' },
-      update: {},
-      create: {
-        name: 'Admin',
-        email: 'admin@ekaashi.com',
-        password: adminPassword,
-        role: 'ADMIN'
-      }
-    })
-    console.log('Admin user created:', adminUser.id)
-
-    // Create categories with proper fields
+    // Define all categories from the image
     const categories = [
       { 
         name: 'Party Wear Earrings', 
@@ -58,17 +39,20 @@ export async function POST() {
       { 
         name: 'Jewelry Set', 
         slug: 'jewelry-set', 
-        description: 'Complete coordinated collections of matching earrings and necklaces',
+        description: 'Complete coordinated collections of matching jewelry pieces',
         isActive: true,
         order: 5
       }
     ]
 
+    console.log('📁 Creating/Updating Categories...')
     const createdCategories = []
+    
     for (const cat of categories) {
       const category = await prisma.category.upsert({
         where: { slug: cat.slug },
         update: {
+          name: cat.name,
           description: cat.description,
           isActive: cat.isActive,
           order: cat.order
@@ -76,95 +60,87 @@ export async function POST() {
         create: cat
       })
       createdCategories.push(category)
-      console.log('Category created/updated:', category.name)
+      console.log(`   ✅ ${category.name}`)
     }
 
-    // Create products - 5 per category with high-quality images
-    const products = [
+    console.log('\n📦 Creating Products (5 per category)...\n')
+
+    // Products for each category
+    const allProducts = [
       // Party Wear Earrings (5 products)
       {
         name: 'Golden Elegance Drop Earrings',
         slug: 'golden-elegance-drop-earrings',
         sku: 'PWE-001',
         description: 'Stunning golden drop earrings with intricate detailing, perfect for weddings and grand celebrations',
-        price: 2999,
-        comparePrice: 3999,
+        price: 5499,
+        comparePrice: 7999,
         images: [
           'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=800&q=80',
           'https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0?w=800&q=80'
         ],
-        categoryId: createdCategories[0].id,
+        categorySlug: 'party-wear-earrings',
         featured: true,
-        inStock: true,
-        seoTitle: 'Golden Elegance Drop Earrings - Party Wear Jewelry',
-        seoDescription: 'Exquisite golden drop earrings perfect for parties and special occasions'
+        inStock: true
       },
       {
         name: 'Crystal Chandelier Earrings',
         slug: 'crystal-chandelier-earrings',
         sku: 'PWE-002',
         description: 'Sparkling crystal chandelier earrings that add glamour and sophistication to any party outfit',
-        price: 3499,
-        comparePrice: 4999,
+        price: 6999,
+        comparePrice: 9999,
         images: [
           'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=800&q=80',
           'https://images.unsplash.com/photo-1611652022419-a9419f74343d?w=800&q=80'
         ],
-        categoryId: createdCategories[0].id,
+        categorySlug: 'party-wear-earrings',
         featured: true,
-        inStock: true,
-        seoTitle: 'Crystal Chandelier Earrings - Glamorous Party Jewelry',
-        seoDescription: 'Dazzling crystal chandelier earrings for special events'
+        inStock: true
       },
       {
         name: 'Ruby Statement Earrings',
         slug: 'ruby-statement-earrings',
         sku: 'PWE-003',
         description: 'Bold ruby statement earrings with gold accents, designed to make you stand out at any celebration',
-        price: 5999,
-        comparePrice: 7999,
+        price: 8999,
+        comparePrice: 11999,
         images: [
           'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=800&q=80',
           'https://images.unsplash.com/photo-1506630448388-4e683c67ddb0?w=800&q=80'
         ],
-        categoryId: createdCategories[0].id,
+        categorySlug: 'party-wear-earrings',
         featured: false,
-        inStock: true,
-        seoTitle: 'Ruby Statement Earrings - Luxury Party Wear',
-        seoDescription: 'Stunning ruby statement earrings for grand occasions'
+        inStock: true
       },
       {
         name: 'Emerald Teardrop Earrings',
         slug: 'emerald-teardrop-earrings',
         sku: 'PWE-004',
         description: 'Elegant emerald teardrop earrings with diamond accents, perfect for evening galas',
-        price: 4499,
+        price: 7499,
         images: [
           'https://images.unsplash.com/photo-1611591437281-460bfbe1220a?w=800&q=80',
           'https://images.unsplash.com/photo-1573408301185-9146fe634ad0?w=800&q=80'
         ],
-        categoryId: createdCategories[0].id,
+        categorySlug: 'party-wear-earrings',
         featured: false,
-        inStock: true,
-        seoTitle: 'Emerald Teardrop Earrings - Evening Party Wear',
-        seoDescription: 'Elegant emerald earrings for sophisticated events'
+        inStock: true
       },
       {
         name: 'Pearl Cluster Party Earrings',
         slug: 'pearl-cluster-party-earrings',
         sku: 'PWE-005',
         description: 'Luxurious pearl cluster earrings with gold setting, ideal for weddings and formal events',
-        price: 3999,
-        comparePrice: 5499,
+        price: 5999,
+        comparePrice: 7999,
         images: [
           'https://images.unsplash.com/photo-1535556116002-6281ff3e9f36?w=800&q=80',
           'https://images.unsplash.com/photo-1589128777073-263566ae5e4d?w=800&q=80'
         ],
-        categoryId: createdCategories[0].id,
+        categorySlug: 'party-wear-earrings',
         featured: true,
-        inStock: true,
-        seoTitle: 'Pearl Cluster Party Earrings - Wedding Jewelry',
-        seoDescription: 'Luxurious pearl cluster earrings for elegant events'
+        inStock: true
       },
 
       // Ethnic Earrings (5 products)
@@ -173,82 +149,72 @@ export async function POST() {
         slug: 'traditional-jhumka-earrings',
         sku: 'ETH-001',
         description: 'Classic Indian jhumka earrings with intricate meenakari work and pearl drops',
-        price: 1999,
+        price: 3999,
         images: [
           'https://images.unsplash.com/photo-1611652022419-a9419f74343d?w=800&q=80',
           'https://images.unsplash.com/photo-1603561591411-07134e71a2a9?w=800&q=80'
         ],
-        categoryId: createdCategories[1].id,
+        categorySlug: 'ethnic-earrings',
         featured: true,
-        inStock: true,
-        seoTitle: 'Traditional Jhumka Earrings - Ethnic Jewelry',
-        seoDescription: 'Authentic traditional jhumka earrings with beautiful craftsmanship'
+        inStock: true
       },
       {
         name: 'Kundan Chandbali Earrings',
         slug: 'kundan-chandbali-earrings',
         sku: 'ETH-002',
         description: 'Exquisite kundan chandbali earrings with traditional craftsmanship and pearl detailing',
-        price: 2499,
-        comparePrice: 3499,
+        price: 5499,
+        comparePrice: 7499,
         images: [
           'https://images.unsplash.com/photo-1602173574767-37ac01994b2a?w=800&q=80',
           'https://images.unsplash.com/photo-1611591437281-460bfbe1220a?w=800&q=80'
         ],
-        categoryId: createdCategories[1].id,
+        categorySlug: 'ethnic-earrings',
         featured: true,
-        inStock: true,
-        seoTitle: 'Kundan Chandbali Earrings - Traditional Jewelry',
-        seoDescription: 'Beautiful kundan chandbali earrings for ethnic occasions'
+        inStock: true
       },
       {
         name: 'Temple Jewelry Earrings',
         slug: 'temple-jewelry-earrings',
         sku: 'ETH-003',
         description: 'Sacred temple jewelry earrings with divine motifs and antique gold finish',
-        price: 2999,
+        price: 4999,
         images: [
           'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=800&q=80',
           'https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0?w=800&q=80'
         ],
-        categoryId: createdCategories[1].id,
+        categorySlug: 'ethnic-earrings',
         featured: false,
-        inStock: true,
-        seoTitle: 'Temple Jewelry Earrings - Sacred Designs',
-        seoDescription: 'Divine temple jewelry earrings with traditional motifs'
+        inStock: true
       },
       {
         name: 'Meenakari Jhumka',
         slug: 'meenakari-jhumka',
         sku: 'ETH-004',
         description: 'Colorful meenakari jhumka with vibrant enamel work and traditional bell shape',
-        price: 2199,
-        comparePrice: 2999,
+        price: 4499,
+        comparePrice: 5999,
         images: [
           'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=800&q=80',
           'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=800&q=80'
         ],
-        categoryId: createdCategories[1].id,
+        categorySlug: 'ethnic-earrings',
         featured: false,
-        inStock: true,
-        seoTitle: 'Meenakari Jhumka - Colorful Ethnic Earrings',
-        seoDescription: 'Vibrant meenakari jhumka with beautiful enamel work'
+        inStock: true
       },
       {
         name: 'Antique Gold Ethnic Earrings',
         slug: 'antique-gold-ethnic-earrings',
         sku: 'ETH-005',
         description: 'Vintage-inspired antique gold earrings with ethnic charm and oxidized finish',
-        price: 1799,
+        price: 6499,
         images: [
           'https://images.unsplash.com/photo-1506630448388-4e683c67ddb0?w=800&q=80',
           'https://images.unsplash.com/photo-1573408301185-9146fe634ad0?w=800&q=80'
         ],
-        categoryId: createdCategories[1].id,
+        categorySlug: 'ethnic-earrings',
         featured: true,
-        inStock: true,
-        seoTitle: 'Antique Gold Ethnic Earrings - Vintage Jewelry',
-        seoDescription: 'Beautiful antique gold earrings with traditional appeal'
+        inStock: true
       },
 
       // Casual Earrings (5 products)
@@ -257,81 +223,71 @@ export async function POST() {
         slug: 'diamond-stud-earrings',
         sku: 'CAS-001',
         description: 'Simple yet elegant diamond stud earrings perfect for everyday wear and office',
-        price: 3499,
+        price: 12999,
         images: [
           'https://images.unsplash.com/photo-1506630448388-4e683c67ddb0?w=800&q=80',
           'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=800&q=80'
         ],
-        categoryId: createdCategories[2].id,
+        categorySlug: 'casual-earrings',
         featured: true,
-        inStock: true,
-        seoTitle: 'Diamond Stud Earrings - Casual Jewelry',
-        seoDescription: 'Elegant diamond stud earrings perfect for daily wear'
+        inStock: true
       },
       {
         name: 'Silver Hoop Earrings',
         slug: 'silver-hoop-earrings',
         sku: 'CAS-002',
         description: 'Classic silver hoop earrings with polished finish for everyday style',
-        price: 1299,
+        price: 2499,
         images: [
           'https://images.unsplash.com/photo-1535556116002-6281ff3e9f36?w=800&q=80',
           'https://images.unsplash.com/photo-1611652022419-a9419f74343d?w=800&q=80'
         ],
-        categoryId: createdCategories[2].id,
+        categorySlug: 'casual-earrings',
         featured: false,
-        inStock: true,
-        seoTitle: 'Silver Hoop Earrings - Daily Wear',
-        seoDescription: 'Stylish silver hoop earrings for everyday fashion'
+        inStock: true
       },
       {
         name: 'Rose Gold Minimalist Studs',
         slug: 'rose-gold-minimalist-studs',
         sku: 'CAS-003',
         description: 'Delicate rose gold stud earrings with minimalist design for a subtle look',
-        price: 1599,
-        comparePrice: 2199,
+        price: 3999,
+        comparePrice: 5499,
         images: [
           'https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0?w=800&q=80',
           'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=800&q=80'
         ],
-        categoryId: createdCategories[2].id,
+        categorySlug: 'casual-earrings',
         featured: true,
-        inStock: true,
-        seoTitle: 'Rose Gold Minimalist Studs - Simple Earrings',
-        seoDescription: 'Elegant rose gold stud earrings for daily wear'
+        inStock: true
       },
       {
         name: 'Geometric Drop Earrings',
         slug: 'geometric-drop-earrings',
         sku: 'CAS-004',
         description: 'Modern geometric drop earrings with contemporary design for trendy style',
-        price: 1899,
+        price: 2999,
         images: [
           'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=800&q=80',
           'https://images.unsplash.com/photo-1611591437281-460bfbe1220a?w=800&q=80'
         ],
-        categoryId: createdCategories[2].id,
+        categorySlug: 'casual-earrings',
         featured: false,
-        inStock: true,
-        seoTitle: 'Geometric Drop Earrings - Modern Casual',
-        seoDescription: 'Trendy geometric earrings for everyday wear'
+        inStock: true
       },
       {
         name: 'Pearl Stud Earrings',
         slug: 'pearl-stud-earrings',
         sku: 'CAS-005',
         description: 'Timeless pearl stud earrings with classic elegance for any occasion',
-        price: 2299,
+        price: 4499,
         images: [
           'https://images.unsplash.com/photo-1589128777073-263566ae5e4d?w=800&q=80',
           'https://images.unsplash.com/photo-1602173574767-37ac01994b2a?w=800&q=80'
         ],
-        categoryId: createdCategories[2].id,
+        categorySlug: 'casual-earrings',
         featured: true,
-        inStock: true,
-        seoTitle: 'Pearl Stud Earrings - Classic Daily Wear',
-        seoDescription: 'Elegant pearl stud earrings for everyday elegance'
+        inStock: true
       },
 
       // Casual Necklace (5 products)
@@ -340,82 +296,72 @@ export async function POST() {
         slug: 'silver-pearl-necklace',
         sku: 'NCK-001',
         description: 'Elegant silver necklace with beautiful freshwater pearls for a sophisticated look',
-        price: 4999,
-        comparePrice: 6999,
+        price: 8999,
+        comparePrice: 11999,
         images: [
           'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=800&q=80',
           'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=800&q=80'
         ],
-        categoryId: createdCategories[3].id,
+        categorySlug: 'casual-necklace',
         featured: true,
-        inStock: true,
-        seoTitle: 'Silver Pearl Necklace - Elegant Jewelry',
-        seoDescription: 'Beautiful silver necklace with pearls for elegant occasions'
+        inStock: true
       },
       {
         name: 'Gold Chain Necklace',
         slug: 'gold-chain-necklace',
         sku: 'NCK-002',
         description: 'Simple gold chain necklace with delicate links, perfect for layering',
-        price: 3499,
+        price: 15999,
         images: [
           'https://images.unsplash.com/photo-1611652022419-a9419f74343d?w=800&q=80',
           'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=800&q=80'
         ],
-        categoryId: createdCategories[3].id,
+        categorySlug: 'casual-necklace',
         featured: false,
-        inStock: true,
-        seoTitle: 'Gold Chain Necklace - Minimalist Jewelry',
-        seoDescription: 'Elegant gold chain necklace for everyday wear'
+        inStock: true
       },
       {
         name: 'Heart Pendant Necklace',
         slug: 'heart-pendant-necklace',
         sku: 'NCK-003',
         description: 'Delicate pendant necklace with heart charm and sparkling stones',
-        price: 2999,
-        comparePrice: 3999,
+        price: 6999,
+        comparePrice: 8999,
         images: [
           'https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0?w=800&q=80',
           'https://images.unsplash.com/photo-1506630448388-4e683c67ddb0?w=800&q=80'
         ],
-        categoryId: createdCategories[3].id,
+        categorySlug: 'casual-necklace',
         featured: true,
-        inStock: true,
-        seoTitle: 'Heart Pendant Necklace - Romantic Jewelry',
-        seoDescription: 'Beautiful pendant necklace with heart charm'
+        inStock: true
       },
       {
         name: 'Layered Chain Necklace',
         slug: 'layered-chain-necklace',
         sku: 'NCK-004',
         description: 'Trendy layered chain necklace with multiple strands for modern style',
-        price: 3799,
+        price: 9999,
         images: [
           'https://images.unsplash.com/photo-1535556116002-6281ff3e9f36?w=800&q=80',
           'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=800&q=80'
         ],
-        categoryId: createdCategories[3].id,
+        categorySlug: 'casual-necklace',
         featured: false,
-        inStock: true,
-        seoTitle: 'Layered Chain Necklace - Trendy Jewelry',
-        seoDescription: 'Stylish layered chain necklace for contemporary look'
+        inStock: true
       },
       {
         name: 'Bar Necklace',
         slug: 'bar-necklace',
         sku: 'NCK-005',
         description: 'Minimalist bar necklace with sleek design for subtle elegance',
-        price: 2499,
+        price: 5499,
         images: [
           'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=800&q=80',
           'https://images.unsplash.com/photo-1611591437281-460bfbe1220a?w=800&q=80'
         ],
-        categoryId: createdCategories[3].id,
+        categorySlug: 'casual-necklace',
         featured: true,
-        inStock: true,
-        seoTitle: 'Bar Necklace - Minimalist Jewelry',
-        seoDescription: 'Elegant bar necklace for everyday sophistication'
+        inStock: true
       },
 
       // Jewelry Set (5 products)
@@ -424,151 +370,133 @@ export async function POST() {
         slug: 'bridal-jewelry-set',
         sku: 'SET-001',
         description: 'Complete bridal jewelry set with necklace, earrings, maang tikka, and bangles',
-        price: 15999,
-        comparePrice: 19999,
+        price: 45999,
+        comparePrice: 59999,
         images: [
           'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=800&q=80',
           'https://images.unsplash.com/photo-1611652022419-a9419f74343d?w=800&q=80',
           'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=800&q=80'
         ],
-        categoryId: createdCategories[4].id,
+        categorySlug: 'jewelry-set',
         featured: true,
-        inStock: true,
-        seoTitle: 'Bridal Jewelry Set - Complete Wedding Collection',
-        seoDescription: 'Stunning bridal jewelry set perfect for weddings and special occasions'
+        inStock: true
       },
       {
         name: 'Party Wear Jewelry Set',
         slug: 'party-wear-jewelry-set',
         sku: 'SET-002',
         description: 'Glamorous jewelry set with statement necklace and matching earrings for parties',
-        price: 8999,
-        comparePrice: 11999,
+        price: 25999,
+        comparePrice: 34999,
         images: [
           'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=800&q=80',
           'https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0?w=800&q=80'
         ],
-        categoryId: createdCategories[4].id,
+        categorySlug: 'jewelry-set',
         featured: true,
-        inStock: true,
-        seoTitle: 'Party Wear Jewelry Set - Glamorous Collection',
-        seoDescription: 'Beautiful jewelry set for parties and celebrations'
+        inStock: true
       },
       {
         name: 'Traditional Jewelry Set',
         slug: 'traditional-jewelry-set',
         sku: 'SET-003',
         description: 'Ethnic jewelry set with necklace, earrings, and bangles in antique gold',
-        price: 12999,
+        price: 35999,
         images: [
           'https://images.unsplash.com/photo-1611652022419-a9419f74343d?w=800&q=80',
           'https://images.unsplash.com/photo-1602173574767-37ac01994b2a?w=800&q=80'
         ],
-        categoryId: createdCategories[4].id,
+        categorySlug: 'jewelry-set',
         featured: false,
-        inStock: true,
-        seoTitle: 'Traditional Jewelry Set - Ethnic Collection',
-        seoDescription: 'Complete traditional jewelry set for ethnic occasions'
+        inStock: true
       },
       {
         name: 'Pearl Jewelry Set',
         slug: 'pearl-jewelry-set',
         sku: 'SET-004',
         description: 'Elegant pearl jewelry set with necklace and earrings in silver setting',
-        price: 9999,
-        comparePrice: 12999,
+        price: 18999,
+        comparePrice: 24999,
         images: [
           'https://images.unsplash.com/photo-1589128777073-263566ae5e4d?w=800&q=80',
           'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=800&q=80'
         ],
-        categoryId: createdCategories[4].id,
+        categorySlug: 'jewelry-set',
         featured: true,
-        inStock: true,
-        seoTitle: 'Pearl Jewelry Set - Elegant Collection',
-        seoDescription: 'Beautiful pearl jewelry set for sophisticated occasions'
+        inStock: true
       },
       {
         name: 'Diamond Jewelry Set',
         slug: 'diamond-jewelry-set',
         sku: 'SET-005',
         description: 'Luxurious diamond jewelry set with necklace, earrings, and bracelet',
-        price: 24999,
-        comparePrice: 29999,
+        price: 65999,
+        comparePrice: 79999,
         images: [
           'https://images.unsplash.com/photo-1506630448388-4e683c67ddb0?w=800&q=80',
           'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=800&q=80'
         ],
-        categoryId: createdCategories[4].id,
+        categorySlug: 'jewelry-set',
         featured: true,
-        inStock: true,
-        seoTitle: 'Diamond Jewelry Set - Luxury Collection',
-        seoDescription: 'Exquisite diamond jewelry set for special occasions'
+        inStock: true
       }
     ]
 
-    for (const product of products) {
+    // Create products
+    let productCount = 0
+    for (const productData of allProducts) {
+      const category = createdCategories.find(c => c.slug === productData.categorySlug)
+      
+      if (!category) {
+        console.log(`   ⚠️  Category not found for ${productData.name}`)
+        continue
+      }
+
+      const { categorySlug, ...product } = productData
+      
       const createdProduct = await prisma.product.upsert({
         where: { slug: product.slug },
-        update: {},
-        create: product
+        update: {
+          ...product,
+          categoryId: category.id
+        },
+        create: {
+          ...product,
+          categoryId: category.id
+        }
       })
-      console.log('Product created:', createdProduct.name)
+      
+      productCount++
+      console.log(`   ✅ ${createdProduct.name} (${createdProduct.sku})`)
     }
 
-    // Create banners
-    const banners = [
-      {
-        title: 'Welcome to Ekaashi',
-        subtitle: 'Discover Exquisite Jewelry Collection',
-        description: 'Handcrafted jewelry pieces that celebrate your unique style',
-        buttonText: 'Shop Now',
-        buttonLink: '/products',
-        image: 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=1200',
-        isActive: true,
-        order: 1
-      },
-      {
-        title: 'New Arrivals',
-        subtitle: 'Latest Jewelry Trends',
-        description: 'Explore our newest collection of stunning jewelry pieces',
-        buttonText: 'View Collection',
-        buttonLink: '/new-arrivals',
-        image: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=1200',
-        isActive: true,
-        order: 2
+    console.log('\n📊 Summary:')
+    console.log(`   ✅ ${createdCategories.length} categories created/updated`)
+    console.log(`   ✅ ${productCount} products created/updated`)
+
+    // Show final counts
+    const finalCounts = await prisma.category.findMany({
+      orderBy: { order: 'asc' },
+      include: {
+        _count: {
+          select: { products: true }
+        }
       }
-    ]
-
-    for (const banner of banners) {
-      const createdBanner = await prisma.banner.create({
-        data: banner
-      })
-      console.log('Banner created:', createdBanner.title)
-    }
-
-    await prisma.$disconnect()
-
-    const counts = {
-      users: await prisma.user.count(),
-      categories: await prisma.category.count(),
-      products: await prisma.product.count(),
-      banners: await prisma.banner.count()
-    }
-
-    return NextResponse.json({
-      success: true,
-      message: 'MongoDB database seeded successfully',
-      counts,
-      timestamp: new Date().toISOString()
     })
 
+    console.log('\n📁 Final Category Status:')
+    finalCounts.forEach(cat => {
+      console.log(`   ${cat.order}. ${cat.name} - ${cat._count.products} products`)
+    })
+
+    console.log('\n✅ Seeding completed successfully!')
+
   } catch (error) {
-    console.error('MongoDB seeding failed:', error)
-    
-    return NextResponse.json({
-      error: 'MongoDB seeding failed',
-      details: error instanceof Error ? error.message : String(error),
-      timestamp: new Date().toISOString()
-    }, { status: 500 })
+    console.error('❌ Error seeding:', error)
+    process.exit(1)
+  } finally {
+    await prisma.$disconnect()
   }
 }
+
+seedAllCategories()

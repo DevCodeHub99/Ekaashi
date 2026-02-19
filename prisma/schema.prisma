@@ -69,38 +69,68 @@ model VerificationToken {
 }
 
 model Category {
-  id          String    @id @default(auto()) @map("_id") @db.ObjectId
-  name        String    @unique
-  slug        String    @unique
-  description String?
-  image       String?
-  products    Product[]
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id            String        @id @default(auto()) @map("_id") @db.ObjectId
+  name          String        @unique
+  slug          String        @unique
+  description   String?
+  image         String?
+  parentId      String?       @db.ObjectId
+  parent        Category?     @relation("CategorySubcategories", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  subcategories Category[]    @relation("CategorySubcategories")
+  products      Product[]
+  isActive      Boolean       @default(true)
+  order         Int           @default(0)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
 
   @@map("categories")
 }
 
 model Product {
-  id          String        @id @default(auto()) @map("_id") @db.ObjectId
-  name        String
-  slug        String        @unique
-  description String?
+  id                String           @id @default(auto()) @map("_id") @db.ObjectId
+  name              String
+  slug              String           @unique
+  sku               String           @unique
+  description       String?
+  specifications    String?          // Product specifications (JSON or text)
+  careInstructions  String?          // Care instructions
+  price             Float
+  comparePrice      Float?
+  images            String[]
+  color             String?          // Main product color
+  size              String?          // Main product size
+  material          String?          // Main product material
+  inStock           Boolean          @default(true)
+  featured          Boolean          @default(false)
+  categoryId        String           @db.ObjectId
+  category          Category         @relation(fields: [categoryId], references: [id])
+  variants          ProductVariant[]
+  orderItems        OrderItem[]
+  cartItems         CartItem[]
+  seoTitle          String?
+  seoDescription    String?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  @@map("products")
+}
+
+model ProductVariant {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  productId   String   @db.ObjectId
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  sku         String   @unique
+  name        String   // e.g., "Gold - Small", "Silver - Medium"
+  attributes  Json     // Store variant attributes as JSON: { "color": "Gold", "size": "Small" }
   price       Float
   comparePrice Float?
   images      String[]
-  inStock     Boolean       @default(true)
-  featured    Boolean       @default(false)
-  categoryId  String        @db.ObjectId
-  category    Category      @relation(fields: [categoryId], references: [id])
-  orderItems  OrderItem[]
-  cartItems   CartItem[]
-  seoTitle    String?
-  seoDescription String?
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  inStock     Boolean  @default(true)
+  stock       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  @@map("products")
+  @@map("product_variants")
 }
 
 model Banner {

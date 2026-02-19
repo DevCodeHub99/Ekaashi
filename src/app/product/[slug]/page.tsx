@@ -18,7 +18,11 @@ async function getProductBySlug(slug: string) {
     const product = await prisma.product.findUnique({
       where: { slug },
       include: {
-        category: true
+        category: true,
+        variants: {
+          where: { inStock: true },
+          orderBy: { createdAt: 'asc' }
+        }
       }
     })
 
@@ -28,14 +32,31 @@ async function getProductBySlug(slug: string) {
       id: product.id,
       name: product.name,
       slug: product.slug,
+      sku: product.sku,
       description: product.description || '',
+      specifications: product.specifications,
+      careInstructions: product.careInstructions,
       price: Number(product.price),
       comparePrice: product.comparePrice ? Number(product.comparePrice) : undefined,
       images: product.images,
+      color: product.color,
+      size: product.size,
+      material: product.material,
       category: product.category.slug,
       categoryName: product.category.name,
       inStock: product.inStock,
-      featured: product.featured
+      featured: product.featured,
+      variants: product.variants.map(v => ({
+        id: v.id,
+        sku: v.sku,
+        name: v.name,
+        attributes: v.attributes as Record<string, string>,
+        price: Number(v.price),
+        comparePrice: v.comparePrice ? Number(v.comparePrice) : undefined,
+        images: v.images,
+        inStock: v.inStock,
+        stock: v.stock
+      }))
     }
   } catch (error) {
     console.error('Error fetching product:', error)

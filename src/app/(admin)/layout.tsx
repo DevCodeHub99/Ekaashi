@@ -11,7 +11,8 @@ import {
   Users, 
   Settings,
   LogOut,
-  ShoppingCart
+  ShoppingCart,
+  FolderTree
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -28,19 +29,24 @@ const sidebarItems = [
     icon: Package,
   },
   {
+    title: 'Categories',
+    href: '/admin/categories',
+    icon: FolderTree,
+  },
+  {
     title: 'Banners',
     href: '/admin/banners',
     icon: ImageIcon,
   },
   {
-    title: 'Abandoned Carts',
-    href: '/admin/abandoned-carts',
-    icon: ShoppingCart,
-  },
-  {
     title: 'Orders',
     href: '/admin/orders',
     icon: Users,
+  },
+  {
+    title: 'Abandoned Carts',
+    href: '/admin/abandoned-carts',
+    icon: ShoppingCart,
   },
   {
     title: 'Settings',

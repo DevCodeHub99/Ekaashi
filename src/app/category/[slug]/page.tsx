@@ -10,31 +10,36 @@ interface CategoryPageProps {
   params: Promise<{ slug: string }>
 }
 
-const categories = {
-  'party-wear-earrings': {
-    name: 'Party Wear Earrings',
-    description: 'Glamorous earrings perfect for parties, weddings, and special occasions.',
-    emoji: '✨'
-  },
-  'ethnic-earrings': {
-    name: 'Ethnic Earrings',
-    description: 'Traditional and cultural designs that celebrate heritage with modern appeal.',
-    emoji: '🌸'
-  },
-  'casual-earrings': {
-    name: 'Casual Earrings',
-    description: 'Everyday elegance with comfortable and stylish designs for daily wear.',
-    emoji: '💫'
-  },
-  'casual-necklace': {
-    name: 'Casual Necklace',
-    description: 'Delicate and versatile necklaces perfect for everyday styling.',
-    emoji: '📿'
-  },
-  'jewelry-set': {
-    name: 'Jewelry Set',
-    description: 'Complete coordinated collections of matching earrings and necklaces.',
-    emoji: '💎'
+// Default emoji mapping for categories (fallback)
+const categoryEmojis: Record<string, string> = {
+  'party-wear-earrings': '✨',
+  'ethnic-earrings': '🌸',
+  'casual-earrings': '🍃',
+  'casual-necklace': '📿',
+  'jewelry-set': '💍',
+  'rings': '💎',
+  'bracelets': '⭐',
+  'anklets': '🌟',
+  'pendants': '✨',
+  'chains': '🔗'
+}
+
+async function getCategoryBySlug(slug: string) {
+  try {
+    const category = await prisma.category.findUnique({
+      where: { slug },
+      include: {
+        _count: {
+          select: {
+            products: true
+          }
+        }
+      }
+    })
+    return category
+  } catch (error) {
+    console.error('Error fetching category:', error)
+    return null
   }
 }
 
@@ -76,7 +81,7 @@ async function getProductsByCategory(categorySlug: string) {
 
 export async function generateMetadata({ params }: CategoryPageProps): Promise<Metadata> {
   const { slug } = await params
-  const category = categories[slug as keyof typeof categories]
+  const category = await getCategoryBySlug(slug)
   
   if (!category) {
     return {
@@ -86,26 +91,30 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
 
   return {
     title: `${category.name} - Ekaashi`,
-    description: category.description,
+    description: category.description || `Browse our collection of ${category.name}`,
   }
 }
 
 export default async function CategoryPage({ params }: CategoryPageProps) {
   const { slug } = await params
-  const category = categories[slug as keyof typeof categories]
+  const category = await getCategoryBySlug(slug)
 
   if (!category) {
     notFound()
   }
 
   const products = await getProductsByCategory(slug)
+  const emoji = categoryEmojis[slug] || '💎'
 
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8 text-center">
-        <div className="text-6xl mb-4">{category.emoji}</div>
+        <div className="text-6xl mb-4">{emoji}</div>
         <h1 className="text-3xl font-bold text-gray-900 mb-4">{category.name}</h1>
-        <p className="text-gray-600 max-w-2xl mx-auto">{category.description}</p>
+        <p className="text-gray-600 max-w-2xl mx-auto">
+          {category.description || `Explore our beautiful collection of ${category.name}`}
+        </p>
+        <p className="text-sm text-gray-500 mt-2">{category._count.products} products available</p>
       </div>
 
       {/* Filters */}
@@ -132,7 +141,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
           ))
         ) : (
           <div className="text-center py-12 col-span-full">
-            <div className="text-6xl mb-4">{category.emoji}</div>
+            <div className="text-6xl mb-4">{emoji}</div>
             <h3 className="text-xl font-semibold text-gray-900 mb-2">No {category.name} Yet</h3>
             <p className="text-gray-600">{category.name} will appear here once added by the admin.</p>
           </div>

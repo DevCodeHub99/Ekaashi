@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { useState } from 'react'
 import { useSession, signOut } from 'next-auth/react'
 import { useCart } from '@/contexts/cart-context'
+import CategoryNav from './CategoryNav'
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -39,21 +40,7 @@ export default function Header() {
             <Link href="/new-arrivals" className="text-sm font-medium text-gray-700 hover:text-amber-600 transition-colors cursor-pointer">
               New Arrivals
             </Link>
-            <Link href="/category/party-wear-earrings" className="text-sm font-medium text-gray-700 hover:text-amber-600 transition-colors cursor-pointer">
-              Party Wear Earrings
-            </Link>
-            <Link href="/category/ethnic-earrings" className="text-sm font-medium text-gray-700 hover:text-amber-600 transition-colors cursor-pointer">
-              Ethnic Earrings
-            </Link>
-            <Link href="/category/casual-earrings" className="text-sm font-medium text-gray-700 hover:text-amber-600 transition-colors cursor-pointer">
-              Casual Earrings
-            </Link>
-            <Link href="/category/casual-necklace" className="text-sm font-medium text-gray-700 hover:text-amber-600 transition-colors cursor-pointer">
-              Casual Necklace
-            </Link>
-            <Link href="/category/jewelry-set" className="text-sm font-medium text-gray-700 hover:text-amber-600 transition-colors cursor-pointer">
-              Jewelry Set
-            </Link>
+            <CategoryNav />
           </nav>
 
           {/* Right side icons */}
@@ -164,21 +151,7 @@ export default function Header() {
               <Link href="/new-arrivals" className="text-sm font-medium text-gray-700 hover:text-amber-600 transition-colors px-2 py-1 cursor-pointer">
                 New Arrivals
               </Link>
-              <Link href="/category/party-wear-earrings" className="text-sm font-medium text-gray-700 hover:text-amber-600 transition-colors px-2 py-1 cursor-pointer">
-                Party Wear Earrings
-              </Link>
-              <Link href="/category/ethnic-earrings" className="text-sm font-medium text-gray-700 hover:text-amber-600 transition-colors px-2 py-1 cursor-pointer">
-                Ethnic Earrings
-              </Link>
-              <Link href="/category/casual-earrings" className="text-sm font-medium text-gray-700 hover:text-amber-600 transition-colors px-2 py-1 cursor-pointer">
-                Casual Earrings
-              </Link>
-              <Link href="/category/casual-necklace" className="text-sm font-medium text-gray-700 hover:text-amber-600 transition-colors px-2 py-1 cursor-pointer">
-                Casual Necklace
-              </Link>
-              <Link href="/category/jewelry-set" className="text-sm font-medium text-gray-700 hover:text-amber-600 transition-colors px-2 py-1 cursor-pointer">
-                Jewelry Set
-              </Link>
+              <CategoryNav isMobile={true} />
               
               {/* Mobile Auth Links */}
               {!session && (

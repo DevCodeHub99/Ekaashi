@@ -3,10 +3,11 @@
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Plus, Search, Edit, Trash2, Eye, X, Save, AlertCircle, CheckCircle } from 'lucide-react'
+import { Plus, Search, Edit, Trash2, Eye, X, Save, AlertCircle, CheckCircle, Package } from 'lucide-react'
 import { ImageUpload } from '@/components/ui/image-upload'
 import { formatPrice } from '@/lib/utils'
 import ProductImage from '@/components/ui/product-image'
+import ProductVariants from '@/components/admin/ProductVariants'
 
 interface Category {
   id: string
@@ -18,6 +19,7 @@ interface Product {
   id: string
   name: string
   slug: string
+  sku?: string
   description: string
   price: number
   comparePrice?: number
@@ -29,13 +31,33 @@ interface Product {
 
 interface ProductFormData {
   name: string
+  sku: string
   description: string
+  specifications: string
+  careInstructions: string
   price: string
   comparePrice: string
   categoryId: string
+  color: string
+  size: string
+  material: string
   inStock: boolean
   featured: boolean
   images: string[]
+}
+
+interface VariantFormData {
+  id?: string
+  sku: string
+  name: string
+  color: string
+  size: string
+  material: string
+  price: string
+  comparePrice: string
+  images: string[]
+  inStock: boolean
+  stock: number
 }
 
 export default function AdminProductsPage() {
@@ -50,21 +72,33 @@ export default function AdminProductsPage() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
   const [formData, setFormData] = useState<ProductFormData>({
     name: '',
+    sku: '',
     description: '',
+    specifications: '',
+    careInstructions: '',
     price: '',
     comparePrice: '',
     categoryId: '',
+    color: '',
+    size: '',
+    material: '',
     inStock: true,
     featured: false,
     images: []
   })
   const [notification, setNotification] = useState<{ type: 'success' | 'error', message: string } | null>(null)
+  const [showVariantsModal, setShowVariantsModal] = useState(false)
+  const [variantsProduct, setVariantsProduct] = useState<Product | null>(null)
+  const [addVariants, setAddVariants] = useState(false)
+  const [variants, setVariants] = useState<VariantFormData[]>([])
+  const [editingVariantIndex, setEditingVariantIndex] = useState<number | null>(null)
 
   // Fetch categories
   const fetchCategories = async () => {
     try {
       const response = await fetch('/api/admin/categories')
-      const data = await response.json()
+      const result = await response.json()
+      const data = result.success ? result.data : []
       setCategories(data)
       
       // Set default category if none selected
@@ -73,6 +107,7 @@ export default function AdminProductsPage() {
       }
     } catch (error) {
       console.error('Error fetching categories:', error)
+      setCategories([])
     }
   }
 
@@ -116,14 +151,23 @@ export default function AdminProductsPage() {
   const resetForm = () => {
     setFormData({
       name: '',
+      sku: '',
       description: '',
+      specifications: '',
+      careInstructions: '',
       price: '',
       comparePrice: '',
       categoryId: categories.length > 0 ? categories[0].id : '',
+      color: '',
+      size: '',
+      material: '',
       inStock: true,
       featured: false,
       images: []
     })
+    setAddVariants(false)
+    setVariants([])
+    setEditingVariantIndex(null)
   }
 
   const openModal = (mode: 'create' | 'edit' | 'view', product?: Product) => {
@@ -137,17 +181,55 @@ export default function AdminProductsPage() {
       const category = categories.find(cat => cat.slug === product.category)
       setFormData({
         name: product.name,
+        sku: product.sku || '',
         description: product.description,
+        specifications: (product as any).specifications || '',
+        careInstructions: (product as any).careInstructions || '',
         price: product.price.toString(),
         comparePrice: product.comparePrice?.toString() || '',
         categoryId: category?.id || (categories.length > 0 ? categories[0].id : ''),
+        color: (product as any).color || '',
+        size: (product as any).size || '',
+        material: (product as any).material || '',
         inStock: product.inStock,
         featured: product.featured,
         images: product.images || []
       })
+      
+      // Fetch existing variants if editing
+      if (mode === 'edit') {
+        fetchProductVariants(product.id)
+      }
     }
     
     setShowModal(true)
+  }
+
+  const fetchProductVariants = async (productId: string) => {
+    try {
+      const response = await fetch(`/api/admin/products/${productId}/variants`)
+      const result = await response.json()
+      
+      if (result.success && result.data.length > 0) {
+        setAddVariants(true)
+        const fetchedVariants = result.data.map((v: any) => ({
+          id: v.id,
+          sku: v.sku,
+          name: v.name,
+          color: v.attributes?.color || '',
+          size: v.attributes?.size || '',
+          material: v.attributes?.material || '',
+          price: v.price.toString(),
+          comparePrice: v.comparePrice?.toString() || '',
+          images: v.images || [],
+          inStock: v.inStock,
+          stock: v.stock
+        }))
+        setVariants(fetchedVariants)
+      }
+    } catch (error) {
+      console.error('Error fetching variants:', error)
+    }
   }
 
   const closeModal = () => {
@@ -166,6 +248,16 @@ export default function AdminProductsPage() {
       
       const method = modalMode === 'create' ? 'POST' : 'PUT'
       
+      console.log('Submitting product:', {
+        url,
+        method,
+        data: {
+          ...formData,
+          price: parseFloat(formData.price),
+          comparePrice: formData.comparePrice ? parseFloat(formData.comparePrice) : undefined
+        }
+      })
+      
       const response = await fetch(url, {
         method,
         headers: {
@@ -179,16 +271,91 @@ export default function AdminProductsPage() {
       })
 
       const data = await response.json()
+      console.log('Response:', data)
       
       if (data.success) {
-        showNotification('success', data.message)
+        const productId = modalMode === 'create' ? data.data.id : selectedProduct?.id
+        
+        // Handle variants for both create and edit modes
+        if (addVariants && variants.length > 0 && productId) {
+          let successCount = 0
+          let failCount = 0
+          
+          for (const variant of variants) {
+            try {
+              const attributes: any = {}
+              if (variant.color) attributes.color = variant.color
+              if (variant.size) attributes.size = variant.size
+              if (variant.material) attributes.material = variant.material
+
+              const variantData = {
+                sku: variant.sku.toUpperCase(),
+                name: variant.name,
+                attributes,
+                price: parseFloat(variant.price),
+                comparePrice: variant.comparePrice ? parseFloat(variant.comparePrice) : undefined,
+                images: variant.images,
+                inStock: variant.inStock,
+                stock: variant.stock
+              }
+
+              if (variant.id) {
+                // Update existing variant
+                const variantResponse = await fetch(`/api/admin/products/${productId}/variants/${variant.id}`, {
+                  method: 'PUT',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify(variantData),
+                })
+                const variantResult = await variantResponse.json()
+                if (variantResult.success) {
+                  successCount++
+                } else {
+                  failCount++
+                  console.error('Variant update failed:', variantResult.error)
+                }
+              } else {
+                // Create new variant
+                const variantResponse = await fetch(`/api/admin/products/${productId}/variants`, {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify(variantData),
+                })
+                const variantResult = await variantResponse.json()
+                if (variantResult.success) {
+                  successCount++
+                } else {
+                  failCount++
+                  console.error('Variant creation failed:', variantResult.error)
+                }
+              }
+            } catch (variantError) {
+              failCount++
+              console.error('Error processing variant:', variantError)
+            }
+          }
+          
+          if (failCount > 0) {
+            showNotification('success', `${data.message}. ${successCount} variant(s) created, ${failCount} failed`)
+          } else {
+            showNotification('success', `${data.message} with ${successCount} variant(s)`)
+          }
+        } else {
+          showNotification('success', data.message)
+        }
+        
         closeModal()
-        fetchProducts()
+        // Force refresh the products list
+        await fetchProducts()
       } else {
         showNotification('error', data.error)
       }
     } catch (error) {
-      showNotification('error', 'An error occurred')
+      console.error('Error submitting form:', error)
+      showNotification('error', 'An error occurred while saving')
     }
   }
 
@@ -218,6 +385,63 @@ export default function AdminProductsPage() {
   const handleImageClick = (imageSrc: string, productName: string) => {
     setSelectedImage({ src: imageSrc, alt: productName })
     setShowImageModal(true)
+  }
+
+  const addVariantToList = () => {
+    const newVariant: VariantFormData = {
+      sku: '',
+      name: '',
+      color: '',
+      size: '',
+      material: '',
+      price: formData.price || '0',
+      comparePrice: '',
+      images: [],
+      inStock: true,
+      stock: 0
+    }
+    setVariants([...variants, newVariant])
+    setEditingVariantIndex(variants.length)
+  }
+
+  const updateVariant = (index: number, field: keyof VariantFormData, value: any) => {
+    const updatedVariants = [...variants]
+    updatedVariants[index] = { ...updatedVariants[index], [field]: value }
+    setVariants(updatedVariants)
+  }
+
+  const removeVariant = (index: number) => {
+    setVariants(variants.filter((_, i) => i !== index))
+    if (editingVariantIndex === index) {
+      setEditingVariantIndex(null)
+    }
+  }
+
+  const getColorBadge = (color?: string) => {
+    if (!color) return null
+    
+    const colorMap: { [key: string]: string } = {
+      gold: 'bg-yellow-400',
+      silver: 'bg-gray-300',
+      'rose gold': 'bg-pink-300',
+      platinum: 'bg-gray-400',
+      white: 'bg-white border border-gray-300',
+      black: 'bg-black',
+      red: 'bg-red-500',
+      blue: 'bg-blue-500',
+      green: 'bg-green-500',
+      pink: 'bg-pink-500',
+      purple: 'bg-purple-500',
+    }
+
+    const bgColor = colorMap[color.toLowerCase()] || 'bg-gray-200'
+
+    return (
+      <span className="inline-flex items-center space-x-1">
+        <span className={`w-3 h-3 rounded-full ${bgColor}`}></span>
+        <span className="capitalize text-xs">{color}</span>
+      </span>
+    )
   }
 
   const filteredProducts = products.filter(product => {
@@ -334,6 +558,7 @@ export default function AdminProductsPage() {
                 <thead>
                   <tr className="border-b">
                     <th className="text-left py-3 px-4 font-medium text-gray-900">Product</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-900">SKU</th>
                     <th className="text-left py-3 px-4 font-medium text-gray-900">Category</th>
                     <th className="text-left py-3 px-4 font-medium text-gray-900">Price</th>
                     <th className="text-left py-3 px-4 font-medium text-gray-900">Status</th>
@@ -363,6 +588,9 @@ export default function AdminProductsPage() {
                             </div>
                           </div>
                         </div>
+                      </td>
+                      <td className="py-4 px-4">
+                        <span className="font-mono text-sm text-gray-700">{product.sku || 'N/A'}</span>
                       </td>
                       <td className="py-4 px-4">
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
@@ -395,6 +623,18 @@ export default function AdminProductsPage() {
                       </td>
                       <td className="py-4 px-4">
                         <div className="flex items-center justify-end space-x-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setVariantsProduct(product)
+                              setShowVariantsModal(true)
+                            }}
+                            className="text-purple-600 hover:text-purple-900"
+                            title="Manage Variants"
+                          >
+                            <Package className="h-4 w-4" />
+                          </Button>
                           <Button
                             variant="ghost"
                             size="sm"
@@ -464,6 +704,22 @@ export default function AdminProductsPage() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
+                    SKU *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    disabled={modalMode === 'view'}
+                    value={formData.sku}
+                    onChange={(e) => setFormData({ ...formData, sku: e.target.value.toUpperCase() })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent disabled:bg-gray-100 uppercase"
+                    placeholder="e.g., RING-001"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Unique product identifier</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Category *
                   </label>
                   <select
@@ -473,9 +729,16 @@ export default function AdminProductsPage() {
                     onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent disabled:bg-gray-100"
                   >
-                    {categories.map(cat => (
-                      <option key={cat.id} value={cat.id}>{cat.name}</option>
-                    ))}
+                    {categories.length === 0 ? (
+                      <option value="">Loading categories...</option>
+                    ) : (
+                      <>
+                        {!formData.categoryId && <option value="">Select a category</option>}
+                        {categories.map(cat => (
+                          <option key={cat.id} value={cat.id}>{cat.name}</option>
+                        ))}
+                      </>
+                    )}
                   </select>
                 </div>
 
@@ -511,6 +774,51 @@ export default function AdminProductsPage() {
                     placeholder="0.00"
                   />
                 </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Color
+                  </label>
+                  <input
+                    type="text"
+                    disabled={modalMode === 'view'}
+                    value={formData.color}
+                    onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent disabled:bg-gray-100"
+                    placeholder="e.g., Gold, Silver"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Main product color</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Size
+                  </label>
+                  <input
+                    type="text"
+                    disabled={modalMode === 'view'}
+                    value={formData.size}
+                    onChange={(e) => setFormData({ ...formData, size: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent disabled:bg-gray-100"
+                    placeholder="e.g., Small, Medium"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Main product size</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Material
+                  </label>
+                  <input
+                    type="text"
+                    disabled={modalMode === 'view'}
+                    value={formData.material}
+                    onChange={(e) => setFormData({ ...formData, material: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent disabled:bg-gray-100"
+                    placeholder="e.g., 18K Gold"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Main product material</p>
+                </div>
               </div>
 
               <div>
@@ -526,6 +834,37 @@ export default function AdminProductsPage() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent disabled:bg-gray-100"
                   placeholder="Enter product description"
                 />
+                <p className="text-xs text-gray-500 mt-1">Main product description shown on product page</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Specifications
+                </label>
+                <textarea
+                  rows={6}
+                  disabled={modalMode === 'view'}
+                  value={formData.specifications}
+                  onChange={(e) => setFormData({ ...formData, specifications: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent disabled:bg-gray-100"
+                  placeholder="Enter product specifications (e.g., Material: Sterling Silver, Weight: 12.5g, Dimensions: 2.5cm x 1.8cm)"
+                />
+                <p className="text-xs text-gray-500 mt-1">Technical specifications shown in Specifications tab</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Care Instructions
+                </label>
+                <textarea
+                  rows={6}
+                  disabled={modalMode === 'view'}
+                  value={formData.careInstructions}
+                  onChange={(e) => setFormData({ ...formData, careInstructions: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent disabled:bg-gray-100"
+                  placeholder="Enter care instructions (e.g., Store in a dry place, Clean with soft cloth, Avoid contact with perfumes)"
+                />
+                <p className="text-xs text-gray-500 mt-1">Care instructions shown in Care Instructions tab</p>
               </div>
 
               <div>
@@ -559,7 +898,243 @@ export default function AdminProductsPage() {
                   />
                   <span className="ml-2 text-sm text-gray-700">Featured Product</span>
                 </label>
+
+                {(modalMode === 'create' || modalMode === 'edit') && (
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={addVariants}
+                      onChange={(e) => setAddVariants(e.target.checked)}
+                      className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                    />
+                    <span className="ml-2 text-sm text-gray-700 font-medium">Add Variants</span>
+                  </label>
+                )}
               </div>
+
+              {/* Variants Section */}
+              {(modalMode === 'create' || modalMode === 'edit') && addVariants && (
+                <div className="border-t pt-6 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900">Product Variants</h3>
+                      <p className="text-sm text-gray-600">Add color, size, or material variations</p>
+                    </div>
+                    <Button
+                      type="button"
+                      onClick={addVariantToList}
+                      className="bg-purple-600 hover:bg-purple-700"
+                      size="sm"
+                    >
+                      <Plus className="mr-2 h-4 w-4" />
+                      Add Variant
+                    </Button>
+                  </div>
+
+                  {variants.length === 0 ? (
+                    <div className="text-center py-8 bg-purple-50 rounded-lg border-2 border-dashed border-purple-300">
+                      <div className="text-4xl mb-2">🎨</div>
+                      <p className="text-gray-600 mb-4">No variants added yet</p>
+                      <Button
+                        type="button"
+                        onClick={addVariantToList}
+                        className="bg-purple-600 hover:bg-purple-700"
+                        size="sm"
+                      >
+                        <Plus className="mr-2 h-4 w-4" />
+                        Add First Variant
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-3 max-h-96 overflow-y-auto">
+                      {variants.map((variant, index) => (
+                        <div key={index} className="border border-purple-200 rounded-lg p-4 bg-purple-50/50">
+                          <div className="flex items-center justify-between mb-3">
+                            <h4 className="font-medium text-gray-900">Variant {index + 1}</h4>
+                            <div className="flex items-center space-x-2">
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setEditingVariantIndex(editingVariantIndex === index ? null : index)}
+                                className="text-purple-600 hover:text-purple-900"
+                              >
+                                {editingVariantIndex === index ? 'Collapse' : 'Expand'}
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => removeVariant(index)}
+                                className="text-red-600 hover:text-red-900"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+
+                          {editingVariantIndex === index ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div>
+                                <label className="block text-xs font-medium text-gray-700 mb-1">
+                                  Variant Name *
+                                </label>
+                                <input
+                                  type="text"
+                                  required={addVariants}
+                                  value={variant.name}
+                                  onChange={(e) => updateVariant(index, 'name', e.target.value)}
+                                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                  placeholder="e.g., Gold - Small"
+                                />
+                              </div>
+
+                              <div>
+                                <label className="block text-xs font-medium text-gray-700 mb-1">
+                                  SKU *
+                                </label>
+                                <input
+                                  type="text"
+                                  required={addVariants}
+                                  value={variant.sku}
+                                  onChange={(e) => updateVariant(index, 'sku', e.target.value.toUpperCase())}
+                                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent uppercase"
+                                  placeholder="e.g., PWE-001-GOLD-S"
+                                />
+                              </div>
+
+                              <div>
+                                <label className="block text-xs font-medium text-gray-700 mb-1">
+                                  Color
+                                </label>
+                                <input
+                                  type="text"
+                                  value={variant.color}
+                                  onChange={(e) => updateVariant(index, 'color', e.target.value)}
+                                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                  placeholder="e.g., Gold, Silver"
+                                />
+                              </div>
+
+                              <div>
+                                <label className="block text-xs font-medium text-gray-700 mb-1">
+                                  Size
+                                </label>
+                                <input
+                                  type="text"
+                                  value={variant.size}
+                                  onChange={(e) => updateVariant(index, 'size', e.target.value)}
+                                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                  placeholder="e.g., Small, Medium"
+                                />
+                              </div>
+
+                              <div>
+                                <label className="block text-xs font-medium text-gray-700 mb-1">
+                                  Material
+                                </label>
+                                <input
+                                  type="text"
+                                  value={variant.material}
+                                  onChange={(e) => updateVariant(index, 'material', e.target.value)}
+                                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                  placeholder="e.g., 18K Gold"
+                                />
+                              </div>
+
+                              <div>
+                                <label className="block text-xs font-medium text-gray-700 mb-1">
+                                  Stock *
+                                </label>
+                                <input
+                                  type="number"
+                                  min="0"
+                                  required={addVariants}
+                                  value={variant.stock}
+                                  onChange={(e) => updateVariant(index, 'stock', parseInt(e.target.value) || 0)}
+                                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                  placeholder="0"
+                                />
+                              </div>
+
+                              <div>
+                                <label className="block text-xs font-medium text-gray-700 mb-1">
+                                  Price *
+                                </label>
+                                <input
+                                  type="number"
+                                  step="0.01"
+                                  min="0"
+                                  required={addVariants}
+                                  value={variant.price}
+                                  onChange={(e) => updateVariant(index, 'price', e.target.value)}
+                                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                  placeholder="0.00"
+                                />
+                              </div>
+
+                              <div>
+                                <label className="block text-xs font-medium text-gray-700 mb-1">
+                                  Compare Price
+                                </label>
+                                <input
+                                  type="number"
+                                  step="0.01"
+                                  min="0"
+                                  value={variant.comparePrice}
+                                  onChange={(e) => updateVariant(index, 'comparePrice', e.target.value)}
+                                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                  placeholder="0.00"
+                                />
+                              </div>
+
+                              <div className="md:col-span-2">
+                                <label className="block text-xs font-medium text-gray-700 mb-1">
+                                  Variant Images
+                                </label>
+                                <ImageUpload
+                                  value={variant.images}
+                                  onChange={(urls) => updateVariant(index, 'images', urls)}
+                                  maxImages={5}
+                                />
+                              </div>
+
+                              <div className="md:col-span-2">
+                                <label className="flex items-center">
+                                  <input
+                                    type="checkbox"
+                                    checked={variant.inStock}
+                                    onChange={(e) => updateVariant(index, 'inStock', e.target.checked)}
+                                    className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                                  />
+                                  <span className="ml-2 text-xs text-gray-700">In Stock</span>
+                                </label>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="space-y-2">
+                              <div className="flex items-center space-x-2">
+                                <span className="text-sm font-medium text-gray-900">{variant.name || 'Unnamed Variant'}</span>
+                                {variant.sku && (
+                                  <span className="text-xs font-mono text-gray-500 bg-white px-2 py-1 rounded">
+                                    {variant.sku}
+                                  </span>
+                                )}
+                              </div>
+                              <div className="flex items-center space-x-3 text-xs text-gray-600">
+                                {variant.color && getColorBadge(variant.color)}
+                                {variant.size && <span>Size: {variant.size}</span>}
+                                {variant.material && <span>Material: {variant.material}</span>}
+                                {variant.price && <span className="font-semibold text-purple-600">{formatPrice(parseFloat(variant.price))}</span>}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
 
               {modalMode !== 'view' && (
                 <div className="flex items-center justify-end space-x-4 pt-6 border-t">
@@ -595,6 +1170,35 @@ export default function AdminProductsPage() {
               className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
               onClick={() => setShowImageModal(false)}
             />
+          </div>
+        </div>
+      )}
+
+      {/* Variants Modal */}
+      {showVariantsModal && variantsProduct && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-6 border-b sticky top-0 bg-white z-10">
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900">
+                  Manage Variants: {variantsProduct.name}
+                </h2>
+                <p className="text-sm text-gray-600 mt-1">
+                  SKU: {variantsProduct.sku} • Base Price: {formatPrice(variantsProduct.price)}
+                </p>
+              </div>
+              <Button variant="ghost" size="sm" onClick={() => setShowVariantsModal(false)}>
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+
+            <div className="p-6">
+              <ProductVariants 
+                productId={variantsProduct.id}
+                productName={variantsProduct.name}
+                basePrice={variantsProduct.price}
+              />
+            </div>
           </div>
         </div>
       )}

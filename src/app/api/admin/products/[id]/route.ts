@@ -38,6 +38,7 @@ export async function GET(
       id: product.id,
       name: product.name,
       slug: product.slug,
+      sku: product.sku,
       description: product.description,
       price: Number(product.price),
       comparePrice: product.comparePrice ? Number(product.comparePrice) : undefined,
@@ -85,7 +86,7 @@ export async function PUT(
     const body = await request.json()
 
     // Validate required fields
-    const requiredFields = ['name', 'description', 'price', 'categoryId']
+    const requiredFields = ['name', 'description', 'price', 'categoryId', 'sku']
     for (const field of requiredFields) {
       if (!body[field]) {
         return NextResponse.json(
@@ -93,6 +94,21 @@ export async function PUT(
           { status: 400 }
         )
       }
+    }
+
+    // Check if SKU already exists (excluding current product)
+    const existingSku = await prisma.product.findFirst({
+      where: {
+        sku: body.sku,
+        id: { not: id }
+      }
+    })
+
+    if (existingSku) {
+      return NextResponse.json(
+        { success: false, error: 'SKU already exists' },
+        { status: 400 }
+      )
     }
 
     // Generate slug
@@ -104,10 +120,16 @@ export async function PUT(
       data: {
         name: body.name,
         slug: slug,
+        sku: body.sku,
         description: body.description,
+        specifications: body.specifications || null,
+        careInstructions: body.careInstructions || null,
         price: parseFloat(body.price),
         comparePrice: body.comparePrice ? parseFloat(body.comparePrice) : null,
         images: body.images || [],
+        color: body.color || null,
+        size: body.size || null,
+        material: body.material || null,
         categoryId: body.categoryId,
         inStock: body.inStock !== false,
         featured: body.featured || false,
@@ -124,6 +146,7 @@ export async function PUT(
       id: updatedProduct.id,
       name: updatedProduct.name,
       slug: updatedProduct.slug,
+      sku: updatedProduct.sku,
       description: updatedProduct.description,
       price: Number(updatedProduct.price),
       comparePrice: updatedProduct.comparePrice ? Number(updatedProduct.comparePrice) : undefined,

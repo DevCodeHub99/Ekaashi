@@ -1,61 +1,72 @@
-import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth/next"
-import { authOptions } from "@/lib/auth"
-import { prisma } from "@/lib/prisma"
+import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
+import { prisma } from '@/lib/prisma'
+import { slugify } from '@/lib/utils'
 
-// GET - Fetch all categories
-export async function GET(request: NextRequest) {
+// GET all categories (with subcategories)
+export async function GET() {
   try {
     const categories = await prisma.category.findMany({
-      orderBy: {
-        name: 'asc'
-      }
+      include: {
+        subcategories: {
+          orderBy: { order: 'asc' }
+        },
+        _count: {
+          select: { products: true }
+        }
+      },
+      orderBy: { order: 'asc' }
     })
 
-    return NextResponse.json(categories)
+    // Filter top-level categories in JavaScript instead of in the query
+    const topLevelCategories = categories.filter(cat => !cat.parentId)
+
+    return NextResponse.json({
+      success: true,
+      data: topLevelCategories
+    })
   } catch (error) {
-    console.error("Error fetching categories:", error)
+    console.error('Error fetching categories:', error)
     return NextResponse.json(
-      { error: "Internal server error" },
+      { success: false, error: 'Failed to fetch categories' },
       { status: 500 }
     )
   }
 }
 
-// POST - Create new category (admin only)
+// POST create new category or subcategory
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     
-    if (!session || session.user?.role !== 'ADMIN') {
+    if (!session || session.user.role !== 'ADMIN') {
       return NextResponse.json(
-        { error: "Unauthorized" },
+        { success: false, error: 'Unauthorized' },
         { status: 401 }
       )
     }
 
-    const { name, description, image } = await request.json()
+    const body = await request.json()
+    const { name, description, image, parentId, isActive, order } = body
 
     if (!name) {
       return NextResponse.json(
-        { error: "Category name is required" },
+        { success: false, error: 'Name is required' },
         { status: 400 }
       )
     }
 
-    // Generate slug from name
-    const slug = name.toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/(^-|-$)/g, '')
+    const slug = slugify(name)
 
     // Check if slug already exists
-    const existingCategory = await prisma.category.findUnique({
+    const existing = await prisma.category.findUnique({
       where: { slug }
     })
 
-    if (existingCategory) {
+    if (existing) {
       return NextResponse.json(
-        { error: "Category with this name already exists" },
+        { success: false, error: 'Category with this name already exists' },
         { status: 400 }
       )
     }
@@ -65,15 +76,27 @@ export async function POST(request: NextRequest) {
         name,
         slug,
         description,
-        image
+        image,
+        parentId: parentId || null,
+        isActive: isActive !== undefined ? isActive : true,
+        order: order || 0
+      },
+      include: {
+        subcategories: true,
+        _count: {
+          select: { products: true }
+        }
       }
     })
 
-    return NextResponse.json(category, { status: 201 })
+    return NextResponse.json({
+      success: true,
+      data: category
+    })
   } catch (error) {
-    console.error("Error creating category:", error)
+    console.error('Error creating category:', error)
     return NextResponse.json(
-      { error: "Internal server error" },
+      { success: false, error: 'Failed to create category' },
       { status: 500 }
     )
   }

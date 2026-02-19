@@ -35,14 +35,31 @@ interface ProductPageClientProps {
     id: string
     name: string
     slug: string
+    sku?: string
     description: string
+    specifications?: string | null
+    careInstructions?: string | null
     price: number
     comparePrice?: number
     images: string[]
+    color?: string | null
+    size?: string | null
+    material?: string | null
     category: string
     categoryName: string
     inStock: boolean
     featured: boolean
+    variants?: Array<{
+      id: string
+      sku: string
+      name: string
+      attributes: Record<string, string>
+      price: number
+      comparePrice?: number
+      images: string[]
+      inStock: boolean
+      stock: number
+    }>
   }
   relatedProducts: Array<{
     id: string
@@ -71,6 +88,53 @@ export default function ProductPageClient({ product, relatedProducts }: ProductP
   const [isAddingToCart, setIsAddingToCart] = useState(false)
   const [isBuyingNow, setIsBuyingNow] = useState(false)
   
+  // Get all available colors (main product + variants)
+  const availableColors: Array<{color: string, source: 'main' | 'variant', data: any}> = []
+  
+  // Add main product color if it exists
+  if (product.color) {
+    availableColors.push({
+      color: product.color,
+      source: 'main',
+      data: product
+    })
+  }
+  
+  // Add variant colors
+  if (product.variants) {
+    product.variants.forEach(variant => {
+      if (variant.attributes.color && !availableColors.find(c => c.color.toLowerCase() === variant.attributes.color?.toLowerCase())) {
+        availableColors.push({
+          color: variant.attributes.color,
+          source: 'variant',
+          data: variant
+        })
+      }
+    })
+  }
+  
+  // Initialize selectedColor: if only one color, auto-select it; if multiple colors, select main product color if it exists
+  const initialColor = availableColors.length === 1 
+    ? availableColors[0].color 
+    : (product.color || null)
+  
+  // Track selected color
+  const [selectedColor, setSelectedColor] = useState<string | null>(initialColor)
+  
+  // Find the selected variant or use main product
+  const selectedVariant = selectedColor 
+    ? product.variants?.find(v => v.attributes.color?.toLowerCase() === selectedColor.toLowerCase())
+    : null
+  
+  // Get current details based on selection
+  const currentPrice = selectedVariant ? selectedVariant.price : product.price
+  const currentComparePrice = selectedVariant ? selectedVariant.comparePrice : product.comparePrice
+  const currentImages = selectedVariant && selectedVariant.images.length > 0 ? selectedVariant.images : product.images
+  const currentInStock = selectedVariant ? selectedVariant.inStock : product.inStock
+  const currentStock = selectedVariant ? selectedVariant.stock : undefined
+  const currentName = selectedVariant ? `${product.name} - ${selectedVariant.name}` : product.name
+  const currentColor = selectedColor || product.color
+  
   // Image zoom states
   const [isZoomModalOpen, setIsZoomModalOpen] = useState(false)
   const [zoomLevel, setZoomLevel] = useState(1)
@@ -80,6 +144,28 @@ export default function ProductPageClient({ product, relatedProducts }: ProductP
 
   const handleQuantityChange = (change: number) => {
     setQuantity(Math.max(1, quantity + change))
+  }
+
+  const getColorBadge = (color?: string) => {
+    if (!color) return null
+    
+    const colorMap: { [key: string]: string } = {
+      gold: 'bg-yellow-400',
+      silver: 'bg-gray-300',
+      'rose gold': 'bg-pink-300',
+      platinum: 'bg-gray-400',
+      white: 'bg-white border border-gray-300',
+      black: 'bg-black',
+      red: 'bg-red-500',
+      blue: 'bg-blue-500',
+      green: 'bg-green-500',
+      pink: 'bg-pink-500',
+      purple: 'bg-purple-500',
+    }
+
+    const bgColor = colorMap[color.toLowerCase()] || 'bg-gray-200'
+
+    return bgColor
   }
 
   const tabs = [
@@ -152,21 +238,27 @@ export default function ProductPageClient({ product, relatedProducts }: ProductP
   }
 
   const handleAddToCart = async () => {
-    if (!product.inStock) return
+    // If multiple colors available but none selected, show error
+    if (availableColors.length > 1 && !selectedColor) {
+      showToast('Please select a color first', 'error')
+      return
+    }
+    
+    if (!currentInStock) return
     
     setIsAddingToCart(true)
     try {
       await addItem({
-        id: product.id,
-        name: product.name,
+        id: selectedVariant ? selectedVariant.id : product.id,
+        name: currentName,
         slug: product.slug,
-        price: product.price,
-        comparePrice: product.comparePrice,
-        image: product.images[0] || '',
+        price: currentPrice,
+        comparePrice: currentComparePrice,
+        image: currentImages[0] || '',
         category: product.category
       }, quantity)
       
-      showToast(`${product.name} added to cart!`, 'success')
+      showToast(`${currentName} added to cart!`, 'success')
     } catch (error) {
       showToast('Failed to add item to cart', 'error')
     } finally {
@@ -175,19 +267,25 @@ export default function ProductPageClient({ product, relatedProducts }: ProductP
   }
 
   const handleBuyNow = async () => {
-    if (!product.inStock || isBuyingNow) return
+    // If multiple colors available but none selected, show error
+    if (availableColors.length > 1 && !selectedColor) {
+      showToast('Please select a color first', 'error')
+      return
+    }
+    
+    if (!currentInStock || isBuyingNow) return
     
     setIsBuyingNow(true)
     
     try {
       // Add to cart first
       await addItem({
-        id: product.id,
-        name: product.name,
+        id: selectedVariant ? selectedVariant.id : product.id,
+        name: currentName,
         slug: product.slug,
-        price: product.price,
-        comparePrice: product.comparePrice,
-        image: product.images[0] || '',
+        price: currentPrice,
+        comparePrice: currentComparePrice,
+        image: currentImages[0] || '',
         category: product.category
       }, quantity)
       
@@ -227,7 +325,7 @@ export default function ProductPageClient({ product, relatedProducts }: ProductP
             {/* Main Image */}
             <div className="relative aspect-square bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 rounded-2xl overflow-hidden shadow-lg group">
               <ImageZoom
-                src={product.images?.[selectedImageIndex] || ''}
+                src={currentImages?.[selectedImageIndex] || ''}
                 alt={product.name}
                 className="w-full h-full"
                 zoomScale={3}
@@ -238,7 +336,7 @@ export default function ProductPageClient({ product, relatedProducts }: ProductP
                 }
               >
                 {/* Sale Badge */}
-                {product.comparePrice && (
+                {currentComparePrice && (
                   <div className="absolute top-4 left-4 bg-gradient-to-r from-red-500 to-red-600 text-white text-sm font-bold px-4 py-2 rounded-full shadow-lg z-10 pointer-events-auto">
                     SALE
                   </div>
@@ -267,7 +365,7 @@ export default function ProductPageClient({ product, relatedProducts }: ProductP
 
             {/* Thumbnail Images */}
             <div className="grid grid-cols-4 gap-3">
-              {[...Array(4)].map((_, index) => (
+              {[...Array(Math.min(4, currentImages.length))].map((_, index) => (
                 <button
                   key={index}
                   className={`aspect-square bg-gradient-to-br from-amber-50 to-orange-50 rounded-lg overflow-hidden border-2 transition-all duration-200 ${
@@ -276,7 +374,7 @@ export default function ProductPageClient({ product, relatedProducts }: ProductP
                   onClick={() => setSelectedImageIndex(index)}
                 >
                   <ImageZoom
-                    src={product.images?.[index] || ''}
+                    src={currentImages?.[index] || ''}
                     alt={`${product.name} - Image ${index + 1}`}
                     className="w-full h-full"
                     zoomScale={2}
@@ -318,15 +416,15 @@ export default function ProductPageClient({ product, relatedProducts }: ProductP
             {/* Price */}
             <div className="flex flex-wrap items-center gap-3 sm:gap-4">
               <span className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900">
-                {formatPrice(product.price)}
+                {formatPrice(currentPrice)}
               </span>
-              {product.comparePrice && (
+              {currentComparePrice && (
                 <>
                   <span className="text-lg sm:text-xl text-gray-500 line-through">
-                    {formatPrice(product.comparePrice)}
+                    {formatPrice(currentComparePrice)}
                   </span>
                   <div className="bg-gradient-to-r from-green-500 to-emerald-500 text-white text-xs sm:text-sm font-bold px-2 sm:px-3 py-1 rounded-full">
-                    {Math.round(((product.comparePrice - product.price) / product.comparePrice) * 100)}% OFF
+                    {Math.round(((currentComparePrice - currentPrice) / currentComparePrice) * 100)}% OFF
                   </div>
                 </>
               )}
@@ -334,10 +432,12 @@ export default function ProductPageClient({ product, relatedProducts }: ProductP
 
             {/* Stock Status */}
             <div className="flex items-center space-x-2">
-              {product.inStock ? (
+              {currentInStock ? (
                 <>
                   <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-green-600" />
-                  <span className="text-sm sm:text-base text-green-600 font-medium">In Stock</span>
+                  <span className="text-sm sm:text-base text-green-600 font-medium">
+                    In Stock {currentStock !== undefined && `(${currentStock} available)`}
+                  </span>
                 </>
               ) : (
                 <>
@@ -346,6 +446,53 @@ export default function ProductPageClient({ product, relatedProducts }: ProductP
                 </>
               )}
             </div>
+
+            {/* Color Selector */}
+            {availableColors.length > 0 && (
+              <div className="space-y-3 border-t border-b border-gray-200 py-4">
+                <label className="text-sm font-medium text-gray-900">
+                  Color {availableColors.length > 1 && !selectedColor && <span className="text-red-600">*</span>}
+                </label>
+                {availableColors.length > 1 && !selectedColor && (
+                  <p className="text-xs text-gray-600">Please select a color</p>
+                )}
+                <div className="flex flex-wrap gap-3">
+                  {availableColors.map((colorOption, index) => {
+                    const isSelected = selectedColor?.toLowerCase() === colorOption.color.toLowerCase()
+                    
+                    return (
+                      <button
+                        key={index}
+                        onClick={() => {
+                          setSelectedColor(colorOption.color)
+                          setSelectedImageIndex(0)
+                        }}
+                        className={`flex items-center space-x-2 px-4 py-2 border-2 rounded-lg transition-all ${
+                          isSelected
+                            ? 'border-purple-600 bg-purple-50'
+                            : 'border-gray-200 hover:border-purple-300'
+                        }`}
+                      >
+                        <span className={`w-6 h-6 rounded-full border-2 border-gray-300 ${getColorBadge(colorOption.color)}`}></span>
+                        <span className="font-medium text-gray-900 capitalize">{colorOption.color}</span>
+                        {isSelected && (
+                          <CheckCircle className="h-4 w-4 text-purple-600" />
+                        )}
+                      </button>
+                    )
+                  })}
+                </div>
+                {currentColor && (
+                  <div className="flex items-center space-x-2 text-sm text-gray-600">
+                    <span>Selected:</span>
+                    <span className="font-medium capitalize">{currentColor}</span>
+                    {currentStock !== undefined && (
+                      <span className="text-green-600">• {currentStock} in stock</span>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Quantity Selector */}
             <div className="space-y-2 sm:space-y-3">
@@ -368,7 +515,7 @@ export default function ProductPageClient({ product, relatedProducts }: ProductP
                   </button>
                 </div>
                 <span className="text-sm sm:text-base text-gray-600">
-                  Total: <span className="font-bold text-gray-900">{formatPrice(product.price * quantity)}</span>
+                  Total: <span className="font-bold text-gray-900">{formatPrice(currentPrice * quantity)}</span>
                 </span>
               </div>
             </div>
@@ -379,7 +526,7 @@ export default function ProductPageClient({ product, relatedProducts }: ProductP
                 <Button 
                   onClick={handleAddToCart}
                   className="flex-1 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white py-3 sm:py-4 text-base sm:text-lg font-medium rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 touch-manipulation"
-                  disabled={!product.inStock || isAddingToCart}
+                  disabled={!currentInStock || isAddingToCart}
                 >
                   <ShoppingBag className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
                   {isAddingToCart ? 'Adding...' : 'Add to Cart'}
@@ -404,10 +551,10 @@ export default function ProductPageClient({ product, relatedProducts }: ProductP
               </div>
 
               <Button 
-                onClick={handleBuyNow}
                 variant="outline"
                 className="w-full py-3 sm:py-4 text-base sm:text-lg font-medium border-2 border-amber-600 text-amber-600 hover:bg-amber-600 hover:text-white rounded-xl transition-all duration-300 touch-manipulation"
-                disabled={!product.inStock || isBuyingNow}
+                disabled={!currentInStock || isBuyingNow}
+                onClick={handleBuyNow}
               >
                 <Zap className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
                 {isBuyingNow ? 'Processing...' : 'Buy Now'}
@@ -471,99 +618,28 @@ export default function ProductPageClient({ product, relatedProducts }: ProductP
 
           <div className="prose max-w-none">
             {activeTab === 'description' && (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-4">Product Details</h3>
-                  <p className="text-gray-600 leading-relaxed mb-4">
-                    {product.description} This exquisite piece is crafted with the finest materials and attention to detail, 
-                    making it perfect for special occasions or everyday elegance.
-                  </p>
-                  <ul className="space-y-2 text-gray-600">
-                    <li className="flex items-center">
-                      <Award className="h-4 w-4 text-amber-600 mr-2" />
-                      Premium quality materials
-                    </li>
-                    <li className="flex items-center">
-                      <Award className="h-4 w-4 text-amber-600 mr-2" />
-                      Handcrafted by skilled artisans
-                    </li>
-                    <li className="flex items-center">
-                      <Award className="h-4 w-4 text-amber-600 mr-2" />
-                      Hypoallergenic and skin-safe
-                    </li>
-                    <li className="flex items-center">
-                      <Award className="h-4 w-4 text-amber-600 mr-2" />
-                      Comes with authenticity certificate
-                    </li>
-                  </ul>
-                </div>
-                
-                <div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-4">Why Choose Ekaashi?</h3>
-                  <div className="space-y-4">
-                    <div className="flex items-start space-x-3">
-                      <CheckCircle className="h-5 w-5 text-green-600 mt-0.5" />
-                      <div>
-                        <div className="font-medium text-gray-900">Quality Assurance</div>
-                        <div className="text-sm text-gray-600">Each piece undergoes rigorous quality checks</div>
-                      </div>
-                    </div>
-                    <div className="flex items-start space-x-3">
-                      <CheckCircle className="h-5 w-5 text-green-600 mt-0.5" />
-                      <div>
-                        <div className="font-medium text-gray-900">Ethical Sourcing</div>
-                        <div className="text-sm text-gray-600">Responsibly sourced materials and fair trade practices</div>
-                      </div>
-                    </div>
-                    <div className="flex items-start space-x-3">
-                      <CheckCircle className="h-5 w-5 text-green-600 mt-0.5" />
-                      <div>
-                        <div className="font-medium text-gray-900">Expert Craftsmanship</div>
-                        <div className="text-sm text-gray-600">Created by master jewelers with decades of experience</div>
-                      </div>
-                    </div>
+              <div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-4">Product Description</h3>
+                {product.description ? (
+                  <div className="text-gray-600 leading-relaxed">
+                    <pre className="whitespace-pre-wrap font-sans">{product.description}</pre>
                   </div>
-                </div>
+                ) : (
+                  <div className="text-gray-500 italic">No description available for this product.</div>
+                )}
               </div>
             )}
 
             {activeTab === 'specifications' && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-4">Technical Specifications</h3>
-                  <dl className="space-y-3">
-                    <div className="flex justify-between">
-                      <dt className="text-gray-600">Material:</dt>
-                      <dd className="font-medium">Sterling Silver</dd>
-                    </div>
-                    <div className="flex justify-between">
-                      <dt className="text-gray-600">Finish:</dt>
-                      <dd className="font-medium">Gold Plated</dd>
-                    </div>
-                    <div className="flex justify-between">
-                      <dt className="text-gray-600">Weight:</dt>
-                      <dd className="font-medium">12.5g</dd>
-                    </div>
-                    <div className="flex justify-between">
-                      <dt className="text-gray-600">Dimensions:</dt>
-                      <dd className="font-medium">2.5cm x 1.8cm</dd>
-                    </div>
-                    <div className="flex justify-between">
-                      <dt className="text-gray-600">Stone Type:</dt>
-                      <dd className="font-medium">Cubic Zirconia</dd>
-                    </div>
-                  </dl>
-                </div>
-                <div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-4">Care Information</h3>
-                  <ul className="space-y-2 text-gray-600">
-                    <li>• Store in a dry place</li>
-                    <li>• Clean with soft cloth</li>
-                    <li>• Avoid contact with perfumes</li>
-                    <li>• Remove before swimming</li>
-                    <li>• Professional cleaning recommended</li>
-                  </ul>
-                </div>
+              <div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-4">Technical Specifications</h3>
+                {product.specifications ? (
+                  <div className="prose max-w-none text-gray-600">
+                    <pre className="whitespace-pre-wrap font-sans">{product.specifications}</pre>
+                  </div>
+                ) : (
+                  <div className="text-gray-500 italic">No specifications available for this product.</div>
+                )}
               </div>
             )}
 
@@ -607,47 +683,15 @@ export default function ProductPageClient({ product, relatedProducts }: ProductP
             )}
 
             {activeTab === 'care' && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-4">Daily Care</h3>
-                  <ul className="space-y-3 text-gray-600">
-                    <li className="flex items-start space-x-3">
-                      <CheckCircle className="h-5 w-5 text-green-600 mt-0.5" />
-                      <span>Clean with a soft, lint-free cloth after each wear</span>
-                    </li>
-                    <li className="flex items-start space-x-3">
-                      <CheckCircle className="h-5 w-5 text-green-600 mt-0.5" />
-                      <span>Store in individual pouches to prevent scratching</span>
-                    </li>
-                    <li className="flex items-start space-x-3">
-                      <CheckCircle className="h-5 w-5 text-green-600 mt-0.5" />
-                      <span>Keep away from moisture and humidity</span>
-                    </li>
-                  </ul>
-                </div>
-                <div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-4">What to Avoid</h3>
-                  <ul className="space-y-3 text-gray-600">
-                    <li className="flex items-start space-x-3">
-                      <div className="h-5 w-5 bg-red-100 rounded-full flex items-center justify-center mt-0.5">
-                        <div className="h-2 w-2 bg-red-600 rounded-full"></div>
-                      </div>
-                      <span>Contact with perfumes, lotions, and chemicals</span>
-                    </li>
-                    <li className="flex items-start space-x-3">
-                      <div className="h-5 w-5 bg-red-100 rounded-full flex items-center justify-center mt-0.5">
-                        <div className="h-2 w-2 bg-red-600 rounded-full"></div>
-                      </div>
-                      <span>Exposure to water while swimming or showering</span>
-                    </li>
-                    <li className="flex items-start space-x-3">
-                      <div className="h-5 w-5 bg-red-100 rounded-full flex items-center justify-center mt-0.5">
-                        <div className="h-2 w-2 bg-red-600 rounded-full"></div>
-                      </div>
-                      <span>Harsh cleaning agents or abrasive materials</span>
-                    </li>
-                  </ul>
-                </div>
+              <div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-4">Care Instructions</h3>
+                {product.careInstructions ? (
+                  <div className="prose max-w-none text-gray-600">
+                    <pre className="whitespace-pre-wrap font-sans">{product.careInstructions}</pre>
+                  </div>
+                ) : (
+                  <div className="text-gray-500 italic">No care instructions available for this product.</div>
+                )}
               </div>
             )}
           </div>
