@@ -591,34 +591,34 @@ export default function ProductPageClient({ product, relatedProducts }: ProductP
             </div>
 
             {/* Trust Indicators */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 pt-4 sm:pt-6 border-t border-gray-200">
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0">
+            <div className="grid grid-cols-3 gap-2 sm:gap-4 pt-4 sm:pt-6 border-t border-gray-200">
+              <div className="flex flex-col items-center text-center sm:flex-row sm:items-center sm:text-left sm:space-x-3">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0 mb-2 sm:mb-0">
                   <Shield className="h-4 w-4 sm:h-5 sm:w-5 text-amber-600" />
                 </div>
                 <div>
-                  <div className="font-medium text-gray-900 text-sm sm:text-base">Lifetime Warranty</div>
-                  <div className="text-xs sm:text-sm text-gray-600">Full protection</div>
+                  <div className="font-medium text-gray-900 text-xs sm:text-base">Lifetime Warranty</div>
+                  <div className="text-xs text-gray-600 hidden sm:block">Full protection</div>
                 </div>
               </div>
               
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+              <div className="flex flex-col items-center text-center sm:flex-row sm:items-center sm:text-left sm:space-x-3">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mb-2 sm:mb-0">
                   <Truck className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
                 </div>
                 <div>
-                  <div className="font-medium text-gray-900 text-sm sm:text-base">Free Shipping</div>
-                  <div className="text-xs sm:text-sm text-gray-600">On orders over ₹5,000</div>
+                  <div className="font-medium text-gray-900 text-xs sm:text-base">Free Shipping</div>
+                  <div className="text-xs text-gray-600 hidden sm:block">On orders over ₹5,000</div>
                 </div>
               </div>
               
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+              <div className="flex flex-col items-center text-center sm:flex-row sm:items-center sm:text-left sm:space-x-3">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0 mb-2 sm:mb-0">
                   <RotateCcw className="h-4 w-4 sm:h-5 sm:w-5 text-green-600" />
                 </div>
                 <div>
-                  <div className="font-medium text-gray-900 text-sm sm:text-base">Easy Returns</div>
-                  <div className="text-xs sm:text-sm text-gray-600">30-day policy</div>
+                  <div className="font-medium text-gray-900 text-xs sm:text-base">Easy Returns</div>
+                  <div className="text-xs text-gray-600 hidden sm:block">30-day policy</div>
                 </div>
               </div>
             </div>
