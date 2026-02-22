@@ -234,6 +234,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       dispatch({ type: 'ADD_ITEM', payload: item })
     }
     
+    // Trigger cart update event
+    window.dispatchEvent(new Event('cartUpdated'))
+    
     try {
       const sessionId = getSessionId()
       
@@ -252,6 +255,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         for (let i = 0; i < qty; i++) {
           dispatch({ type: 'REMOVE_ITEM', payload: item.id })
         }
+        // Trigger cart update event after revert
+        window.dispatchEvent(new Event('cartUpdated'))
         throw new Error('Failed to add item to cart')
       }
     } catch (error) {
@@ -263,6 +268,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const removeItem = async (id: string) => {
     // Optimistic update
     dispatch({ type: 'REMOVE_ITEM', payload: id })
+    
+    // Trigger cart update event
+    window.dispatchEvent(new Event('cartUpdated'))
     
     try {
       const sessionId = getSessionId()
@@ -284,6 +292,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const updateQuantity = async (id: string, quantity: number) => {
     // Optimistic update
     dispatch({ type: 'UPDATE_QUANTITY', payload: { id, quantity } })
+    
+    // Trigger cart update event
+    window.dispatchEvent(new Event('cartUpdated'))
     
     try {
       const sessionId = getSessionId()
@@ -311,6 +322,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const clearCart = async () => {
     // Optimistic update
     dispatch({ type: 'CLEAR_CART' })
+    
+    // Trigger cart update event
+    window.dispatchEvent(new Event('cartUpdated'))
     
     try {
       const sessionId = getSessionId()

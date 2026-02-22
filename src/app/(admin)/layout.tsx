@@ -12,7 +12,10 @@ import {
   Settings,
   LogOut,
   ShoppingCart,
-  FolderTree
+  FolderTree,
+  Instagram,
+  Menu,
+  X
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -39,6 +42,11 @@ const sidebarItems = [
     icon: ImageIcon,
   },
   {
+    title: 'Instagram',
+    href: '/admin/instagram',
+    icon: Instagram,
+  },
+  {
     title: 'Orders',
     href: '/admin/orders',
     icon: Users,
@@ -63,6 +71,7 @@ export default function AdminLayout({
   const { data: session, status } = useSession()
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(true)
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
 
   useEffect(() => {
     if (status === 'loading') return // Still loading
@@ -104,12 +113,36 @@ export default function AdminLayout({
   return (
     <div className="flex h-screen bg-gray-100">
       {/* Sidebar */}
-      <div className="w-64 bg-white shadow-sm">
+      <div className={cn(
+        "bg-white shadow-sm transition-all duration-300 ease-in-out relative",
+        isSidebarCollapsed ? "w-20" : "w-64"
+      )}>
+        {/* Toggle Button */}
+        <button
+          onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+          className="absolute -right-3 top-6 z-10 bg-white border border-gray-200 rounded-full p-1.5 shadow-md hover:bg-gray-50 transition-colors"
+        >
+          {isSidebarCollapsed ? (
+            <Menu className="h-4 w-4 text-gray-600" />
+          ) : (
+            <X className="h-4 w-4 text-gray-600" />
+          )}
+        </button>
+
         <div className="p-6">
-          <h2 className="text-xl font-bold text-amber-600">Ekaashi Admin</h2>
-          <p className="text-sm text-gray-600">Jewelry Store</p>
-          <p className="text-xs text-gray-500 mt-1">Welcome, {session.user?.name || session.user?.email}</p>
+          {!isSidebarCollapsed ? (
+            <>
+              <h2 className="text-xl font-bold text-amber-600">Ekaashi Admin</h2>
+              <p className="text-sm text-gray-600">Jewelry Store</p>
+              <p className="text-xs text-gray-500 mt-1 truncate">Welcome, {session.user?.name || session.user?.email}</p>
+            </>
+          ) : (
+            <div className="flex justify-center">
+              <div className="text-2xl font-bold text-amber-600">E</div>
+            </div>
+          )}
         </div>
+        
         <nav className="mt-6">
           {sidebarItems.map((item) => {
             const Icon = item.icon
@@ -120,27 +153,36 @@ export default function AdminLayout({
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  'flex items-center px-6 py-3 text-sm font-medium transition-colors',
+                  'flex items-center py-3 text-sm font-medium transition-colors',
+                  isSidebarCollapsed ? 'px-6 justify-center' : 'px-6',
                   isActive
                     ? 'bg-amber-50 text-amber-600 border-r-2 border-amber-600'
                     : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                 )}
+                title={isSidebarCollapsed ? item.title : undefined}
               >
-                <Icon className="mr-3 h-5 w-5" />
-                {item.title}
+                <Icon className={cn("h-5 w-5", !isSidebarCollapsed && "mr-3")} />
+                {!isSidebarCollapsed && item.title}
               </Link>
             )
           })}
         </nav>
         
-        <div className="absolute bottom-0 w-64 p-6">
+        <div className={cn(
+          "absolute bottom-0 p-6",
+          isSidebarCollapsed ? "w-20" : "w-64"
+        )}>
           <Button 
             variant="ghost" 
-            className="w-full justify-start text-gray-600 hover:text-amber-600"
+            className={cn(
+              "w-full text-gray-600 hover:text-amber-600",
+              isSidebarCollapsed ? "justify-center px-0" : "justify-start"
+            )}
             onClick={handleLogout}
+            title={isSidebarCollapsed ? "Logout" : undefined}
           >
-            <LogOut className="mr-3 h-5 w-5" />
-            Logout
+            <LogOut className={cn("h-5 w-5", !isSidebarCollapsed && "mr-3")} />
+            {!isSidebarCollapsed && "Logout"}
           </Button>
         </div>
       </div>

@@ -40,7 +40,7 @@ export default function CategoryNav({ isMobile = false }: { isMobile?: boolean }
           <Link
             key={category.id}
             href={`/category/${category.slug}`}
-            className="text-sm font-medium text-gray-700 hover:text-amber-600 transition-colors px-2 py-1 cursor-pointer"
+            className="text-base font-medium text-gray-700 hover:text-amber-600 hover:bg-amber-50 transition-colors px-4 py-3 rounded-lg cursor-pointer block"
           >
             {category.name}
           </Link>

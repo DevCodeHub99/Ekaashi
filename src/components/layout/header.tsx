@@ -1,33 +1,89 @@
 'use client'
 
 import Link from 'next/link'
-import { ShoppingBag, Search, Menu, User, Heart, LogOut } from 'lucide-react'
+import { ShoppingBag, Search, Menu, User, Heart, LogOut, X, ChevronDown, ChevronUp } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useSession, signOut } from 'next-auth/react'
 import { useCart } from '@/contexts/cart-context'
 import CategoryNav from './CategoryNav'
+import SearchModal from '@/components/ui/search-modal'
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
+  const [isSearchOpen, setIsSearchOpen] = useState(false)
+  const [isCategoriesOpen, setIsCategoriesOpen] = useState(false)
+  const [wishlistCount, setWishlistCount] = useState(0)
   const { data: session, status } = useSession()
   const { totalItems } = useCart()
+
+  // Fetch wishlist count
+  useEffect(() => {
+    fetchWishlistCount()
+    
+    // Listen for wishlist updates
+    const handleWishlistUpdate = () => {
+      fetchWishlistCount()
+    }
+    
+    window.addEventListener('wishlistUpdated', handleWishlistUpdate)
+    
+    return () => {
+      window.removeEventListener('wishlistUpdated', handleWishlistUpdate)
+    }
+  }, [session])
+
+  // Prevent body scroll when menu is open
+  useEffect(() => {
+    if (isMenuOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = 'unset'
+    }
+    return () => {
+      document.body.style.overflow = 'unset'
+    }
+  }, [isMenuOpen])
+
+  const fetchWishlistCount = async () => {
+    try {
+      const response = await fetch('/api/wishlist')
+      const data = await response.json()
+      if (data.success) {
+        setWishlistCount(data.data.length)
+      }
+    } catch (error) {
+      console.error('Error fetching wishlist count:', error)
+    }
+  }
 
   const handleSignOut = () => {
     signOut({ callbackUrl: '/' })
   }
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-white border-b border-gray-200 shadow-sm">
+    <header className="fixed top-0 left-0 right-0 z-50 w-full bg-white border-b border-gray-200 shadow-md">
       <div className="container mx-auto px-4">
-        <div className="flex h-16 items-center justify-between">
-          {/* Logo */}
-          <Link href="/" className="flex items-center space-x-2 cursor-pointer">
-            <div className="text-2xl font-bold text-amber-600">
-              EKAASHI
-            </div>
-          </Link>
+        <div className="flex h-14 sm:h-16 items-center justify-between">
+          {/* Mobile menu button - Left side on mobile */}
+          <div className="flex items-center space-x-2 sm:space-x-3">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="lg:hidden text-gray-600 hover:text-amber-600 cursor-pointer h-9 w-9 sm:h-10 sm:w-10"
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+            >
+              <Menu className="h-5 w-5 sm:h-6 sm:w-6" />
+            </Button>
+            
+            {/* Logo */}
+            <Link href="/" className="flex items-center space-x-2 cursor-pointer flex-shrink-0">
+              <div className="text-xl sm:text-2xl font-bold text-amber-600">
+                EKAASHI
+              </div>
+            </Link>
+          </div>
 
           {/* Desktop Navigation */}
           <nav className="hidden lg:flex items-center space-x-8">
@@ -44,13 +100,27 @@ export default function Header() {
           </nav>
 
           {/* Right side icons */}
-          <div className="flex items-center space-x-4">
-            <Button variant="ghost" size="icon" className="hidden md:flex text-gray-600 hover:text-amber-600 cursor-pointer">
-              <Search className="h-5 w-5" />
+          <div className="flex items-center space-x-1 sm:space-x-2 md:space-x-4">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="text-gray-600 hover:text-amber-600 cursor-pointer h-9 w-9 sm:h-10 sm:w-10"
+              onClick={() => setIsSearchOpen(true)}
+            >
+              <Search className="h-4 w-4 sm:h-5 sm:w-5" />
             </Button>
-            <Button variant="ghost" size="icon" className="text-gray-600 hover:text-amber-600 cursor-pointer">
-              <Heart className="h-5 w-5" />
-            </Button>
+            
+            {/* Wishlist Icon with Count */}
+            <Link href="/wishlist">
+              <Button variant="ghost" size="icon" className="relative text-gray-600 hover:text-amber-600 cursor-pointer h-9 w-9 sm:h-10 sm:w-10">
+                <Heart className="h-4 w-4 sm:h-5 sm:w-5" />
+                {wishlistCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 sm:-top-1 sm:-right-1 h-4 w-4 rounded-full bg-red-500 text-[10px] sm:text-xs text-white flex items-center justify-center font-bold">
+                    {wishlistCount > 99 ? '99+' : wishlistCount}
+                  </span>
+                )}
+              </Button>
+            </Link>
             
             {/* User Menu */}
             {status === 'loading' ? (
@@ -60,17 +130,17 @@ export default function Header() {
                 <Button 
                   variant="ghost" 
                   size="icon" 
-                  className="text-gray-600 hover:text-amber-600 cursor-pointer"
+                  className="text-gray-600 hover:text-amber-600 cursor-pointer h-9 w-9 sm:h-10 sm:w-10"
                   onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
                 >
-                  <User className="h-5 w-5" />
+                  <User className="h-4 w-4 sm:h-5 sm:w-5" />
                 </Button>
                 
                 {isUserMenuOpen && (
                   <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
                     <div className="px-4 py-2 border-b border-gray-100">
-                      <p className="text-sm font-medium text-gray-900">{session.user?.name}</p>
-                      <p className="text-xs text-gray-500">{session.user?.email}</p>
+                      <p className="text-sm font-medium text-gray-900 truncate">{session.user?.name}</p>
+                      <p className="text-xs text-gray-500 truncate">{session.user?.email}</p>
                     </div>
                     
                     {session.user?.role === 'ADMIN' && (
@@ -97,6 +167,13 @@ export default function Header() {
                     >
                       My Orders
                     </Link>
+                    <Link 
+                      href="/wishlist" 
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
+                      onClick={() => setIsUserMenuOpen(false)}
+                    >
+                      My Wishlist
+                    </Link>
                     <button 
                       onClick={handleSignOut}
                       className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center cursor-pointer"
@@ -109,73 +186,140 @@ export default function Header() {
               </div>
             ) : (
               <Link href="/auth/signin">
-                <Button variant="ghost" size="icon" className="text-gray-600 hover:text-amber-600 cursor-pointer">
-                  <User className="h-5 w-5" />
+                <Button variant="ghost" size="icon" className="text-gray-600 hover:text-amber-600 cursor-pointer h-9 w-9 sm:h-10 sm:w-10">
+                  <User className="h-4 w-4 sm:h-5 sm:w-5" />
                 </Button>
               </Link>
             )}
 
             <Link href="/cart">
-              <Button variant="ghost" size="icon" className="relative text-gray-600 hover:text-amber-600 cursor-pointer">
-                <ShoppingBag className="h-5 w-5" />
+              <Button variant="ghost" size="icon" className="relative text-gray-600 hover:text-amber-600 cursor-pointer h-9 w-9 sm:h-10 sm:w-10">
+                <ShoppingBag className="h-4 w-4 sm:h-5 sm:w-5" />
                 {totalItems > 0 && (
-                  <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-amber-600 text-xs text-white flex items-center justify-center font-bold">
+                  <span className="absolute -top-0.5 -right-0.5 sm:-top-1 sm:-right-1 h-4 w-4 rounded-full bg-amber-600 text-[10px] sm:text-xs text-white flex items-center justify-center font-bold">
                     {totalItems > 99 ? '99+' : totalItems}
                   </span>
                 )}
               </Button>
             </Link>
-            
-            {/* Mobile menu button */}
+          </div>
+        </div>
+      </div>
+
+      {/* Mobile Sidebar Navigation - Slide from Left */}
+      <div className={`lg:hidden fixed inset-y-0 left-0 z-50 w-72 bg-white shadow-2xl transform transition-transform duration-300 ease-in-out ${isMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+        <div className="flex flex-col h-full">
+          {/* Sidebar Header */}
+          <div className="flex items-center justify-between p-4 border-b border-gray-200">
+            <div className="text-2xl font-bold text-amber-600">EKAASHI</div>
             <Button 
               variant="ghost" 
               size="icon" 
-              className="lg:hidden text-gray-600 hover:text-amber-600 cursor-pointer"
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="text-gray-600 hover:text-amber-600 cursor-pointer"
+              onClick={() => setIsMenuOpen(false)}
             >
-              <Menu className="h-5 w-5" />
+              <X className="h-6 w-6" />
             </Button>
           </div>
-        </div>
 
-        {/* Mobile Navigation */}
-        {isMenuOpen && (
-          <div className="lg:hidden border-t border-gray-200 py-4 bg-white">
-            <nav className="flex flex-col space-y-4">
-              <Link href="/products" className="text-sm font-medium text-gray-700 hover:text-amber-600 transition-colors px-2 py-1 cursor-pointer">
+          {/* Sidebar Content */}
+          <nav className="flex-1 overflow-y-auto py-4">
+            <div className="flex flex-col space-y-1 px-4">
+              {/* Search Button */}
+              <button
+                onClick={() => {
+                  setIsMenuOpen(false)
+                  setIsSearchOpen(true)
+                }}
+                className="flex items-center gap-3 text-base font-medium text-gray-700 hover:text-amber-600 hover:bg-amber-50 transition-colors px-4 py-3 rounded-lg cursor-pointer"
+              >
+                <Search className="h-5 w-5" />
+                <span>Search Products</span>
+              </button>
+              
+              <div className="border-t border-gray-200 my-2"></div>
+              
+              <Link 
+                href="/products" 
+                className="text-base font-medium text-gray-700 hover:text-amber-600 hover:bg-amber-50 transition-colors px-4 py-3 rounded-lg cursor-pointer"
+                onClick={() => setIsMenuOpen(false)}
+              >
                 All
               </Link>
-              <Link href="/deals" className="text-sm font-medium text-gray-700 hover:text-amber-600 transition-colors px-2 py-1 cursor-pointer">
+              <Link 
+                href="/deals" 
+                className="text-base font-medium text-gray-700 hover:text-amber-600 hover:bg-amber-50 transition-colors px-4 py-3 rounded-lg cursor-pointer"
+                onClick={() => setIsMenuOpen(false)}
+              >
                 Deals
               </Link>
-              <Link href="/new-arrivals" className="text-sm font-medium text-gray-700 hover:text-amber-600 transition-colors px-2 py-1 cursor-pointer">
-                New Arrivals
+              <Link 
+                href="/new-arrivals" 
+                className="text-base font-medium text-gray-700 hover:text-amber-600 hover:bg-amber-50 transition-colors px-4 py-3 rounded-lg cursor-pointer"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                New Arrivals ✨
               </Link>
-              <CategoryNav isMobile={true} />
               
-              {/* Mobile Auth Links */}
-              {!session && (
-                <div className="border-t border-gray-200 pt-4 mt-4">
-                  <Link href="/auth/signin" className="text-sm font-medium text-amber-600 hover:text-amber-700 transition-colors px-2 py-1 block cursor-pointer">
-                    Sign In
-                  </Link>
-                  <Link href="/auth/signup" className="text-sm font-medium text-amber-600 hover:text-amber-700 transition-colors px-2 py-1 block cursor-pointer">
-                    Create Account
-                  </Link>
-                </div>
-              )}
-            </nav>
-          </div>
-        )}
+              {/* Categories Toggle Section */}
+              <div className="pt-2">
+                <button
+                  onClick={() => setIsCategoriesOpen(!isCategoriesOpen)}
+                  className="w-full flex items-center justify-between text-base font-medium text-gray-700 hover:text-amber-600 hover:bg-amber-50 transition-colors px-4 py-3 rounded-lg cursor-pointer"
+                >
+                  <span>Categories</span>
+                  {isCategoriesOpen ? (
+                    <ChevronUp className="h-5 w-5" />
+                  ) : (
+                    <ChevronDown className="h-5 w-5" />
+                  )}
+                </button>
+                
+                {/* Collapsible Categories List */}
+                {isCategoriesOpen && (
+                  <div className="mt-1 ml-4 space-y-1" onClick={() => setIsMenuOpen(false)}>
+                    <CategoryNav isMobile={true} />
+                  </div>
+                )}
+              </div>
+            </div>
+          </nav>
+
+          {/* Sidebar Footer - Auth Links */}
+          {!session && (
+            <div className="border-t border-gray-200 p-4 space-y-2">
+              <Link 
+                href="/auth/signin" 
+                className="block w-full text-center bg-amber-600 hover:bg-amber-700 text-white font-medium px-4 py-3 rounded-lg transition-colors cursor-pointer"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Log In
+              </Link>
+              <Link 
+                href="/auth/signup" 
+                className="block w-full text-center border-2 border-amber-600 text-amber-600 hover:bg-amber-50 font-medium px-4 py-3 rounded-lg transition-colors cursor-pointer"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Register
+              </Link>
+            </div>
+          )}
+        </div>
       </div>
-      
-      {/* Click outside to close user menu */}
-      {isUserMenuOpen && (
+
+      {/* Overlay - Click outside to close menus */}
+      {(isUserMenuOpen || isMenuOpen) && (
         <div 
-          className="fixed inset-0 z-40" 
-          onClick={() => setIsUserMenuOpen(false)}
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity duration-300" 
+          onClick={() => {
+            setIsUserMenuOpen(false)
+            setIsMenuOpen(false)
+          }}
         ></div>
       )}
+
+      {/* Search Modal */}
+      <SearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
     </header>
   )
 }

@@ -22,6 +22,7 @@ model User {
   sessions      Session[]
   orders        Order[]
   cartItems     CartItem[]
+  wishlistItems WishlistItem[]
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -107,6 +108,7 @@ model Product {
   variants          ProductVariant[]
   orderItems        OrderItem[]
   cartItems         CartItem[]
+  wishlistItems     WishlistItem[]
   seoTitle          String?
   seoDescription    String?
   createdAt         DateTime         @default(now())
@@ -211,6 +213,32 @@ model AbandonedCart {
   updatedAt   DateTime @updatedAt
 
   @@map("abandoned_carts")
+}
+
+model InstagramPost {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  image       String   // Image URL
+  caption     String?  // Optional caption
+  link        String?  // Instagram post link
+  isActive    Boolean  @default(true)
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("instagram_posts")
+}
+
+model WishlistItem {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String?  @db.ObjectId
+  sessionId String?  // For guest users
+  productId String   @db.ObjectId
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("wishlist_items")
 }
 
 enum Role {

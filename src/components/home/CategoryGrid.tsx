@@ -101,11 +101,24 @@ export default function CategoryGrid() {
               href={`/category/${category.slug}`} 
               className="group flex-shrink-0 w-40 sm:w-48 cursor-pointer"
             >
-              <div className={`relative overflow-hidden rounded-lg bg-gradient-to-br ${getGradient(index)} aspect-[4/5] shadow-lg hover:shadow-xl transition-all duration-500`}>
-                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+              <div className={`relative overflow-hidden rounded-lg ${category.image ? '' : `bg-gradient-to-br ${getGradient(index)}`} aspect-[4/5] shadow-lg hover:shadow-xl transition-all duration-500`}>
+                {category.image ? (
+                  <>
+                    <img 
+                      src={category.image} 
+                      alt={category.name}
+                      className="absolute inset-0 w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                  </>
+                ) : (
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+                )}
                 <div className="absolute inset-0 flex flex-col justify-end p-3 sm:p-4">
                   <div className="text-center text-white">
-                    <div className="text-2xl sm:text-3xl mb-2 opacity-90">{getEmoji(category.slug)}</div>
+                    {!category.image && (
+                      <div className="text-2xl sm:text-3xl mb-2 opacity-90">{getEmoji(category.slug)}</div>
+                    )}
                     <h3 className="text-xs sm:text-sm font-semibold mb-1">{category.name}</h3>
                     <p className="text-xs opacity-90">{category.productCount} Products</p>
                   </div>
@@ -137,11 +150,24 @@ export default function CategoryGrid() {
             href={`/category/${category.slug}`} 
             className="group cursor-pointer"
           >
-            <div className={`relative overflow-hidden rounded-lg bg-gradient-to-br ${getGradient(index)} aspect-[4/5] shadow-lg hover:shadow-xl transition-all duration-500`}>
-              <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+            <div className={`relative overflow-hidden rounded-lg ${category.image ? '' : `bg-gradient-to-br ${getGradient(index)}`} aspect-[4/5] shadow-lg hover:shadow-xl transition-all duration-500`}>
+              {category.image ? (
+                <>
+                  <img 
+                    src={category.image} 
+                    alt={category.name}
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                </>
+              ) : (
+                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+              )}
               <div className="absolute inset-0 flex flex-col justify-end p-6">
                 <div className="text-center text-white">
-                  <div className="text-4xl mb-3 opacity-90">{getEmoji(category.slug)}</div>
+                  {!category.image && (
+                    <div className="text-4xl mb-3 opacity-90">{getEmoji(category.slug)}</div>
+                  )}
                   <h3 className="text-lg font-semibold mb-1">{category.name}</h3>
                   <p className="text-sm opacity-90">{category.productCount} Products</p>
                 </div>

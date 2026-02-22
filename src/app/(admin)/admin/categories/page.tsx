@@ -44,6 +44,8 @@ export default function AdminCategoriesPage() {
     order: 0
   })
   const [notification, setNotification] = useState<{ type: 'success' | 'error', message: string } | null>(null)
+  const [uploadingImage, setUploadingImage] = useState(false)
+  const [imageFile, setImageFile] = useState<File | null>(null)
 
   const fetchCategories = async () => {
     try {
@@ -81,6 +83,57 @@ export default function AdminCategoriesPage() {
       isActive: true,
       order: 0
     })
+    setImageFile(null)
+  }
+
+  const handleImageUpload = async (file: File) => {
+    if (!file) return
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      showNotification('error', 'Please upload an image file')
+      return
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      showNotification('error', 'Image size must be less than 5MB')
+      return
+    }
+
+    setUploadingImage(true)
+
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData
+      })
+
+      const data = await response.json()
+
+      if (data.success && data.data.secure_url) {
+        setFormData(prev => ({ ...prev, image: data.data.secure_url }))
+        showNotification('success', 'Image uploaded successfully!')
+      } else {
+        throw new Error(data.error || 'Upload failed')
+      }
+    } catch (error) {
+      console.error('Upload error:', error)
+      showNotification('error', 'Failed to upload image. Please try again.')
+    } finally {
+      setUploadingImage(false)
+    }
+  }
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      setImageFile(file)
+      handleImageUpload(file)
+    }
   }
 
   const openModal = (mode: 'create' | 'edit', category?: Category) => {
@@ -351,15 +404,100 @@ export default function AdminCategoriesPage() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Image URL
+                  Category Card Image
                 </label>
-                <input
-                  type="url"
-                  value={formData.image}
-                  onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-                  placeholder="https://example.com/image.jpg"
-                />
+                
+                {/* Upload Button */}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <label className="flex-1">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleFileChange}
+                        className="hidden"
+                        disabled={uploadingImage}
+                      />
+                      <div className="w-full px-4 py-2 border-2 border-dashed border-gray-300 rounded-lg hover:border-amber-500 cursor-pointer transition-colors text-center">
+                        {uploadingImage ? (
+                          <div className="flex items-center justify-center space-x-2">
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-amber-600"></div>
+                            <span className="text-sm text-gray-600">Uploading...</span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center justify-center space-x-2">
+                            <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                            </svg>
+                            <span className="text-sm text-gray-600">Click to upload image</span>
+                          </div>
+                        )}
+                      </div>
+                    </label>
+                  </div>
+
+                  {/* Or divider */}
+                  <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                      <div className="w-full border-t border-gray-300"></div>
+                    </div>
+                    <div className="relative flex justify-center text-xs">
+                      <span className="px-2 bg-white text-gray-500">OR</span>
+                    </div>
+                  </div>
+
+                  {/* URL Input */}
+                  <input
+                    type="url"
+                    value={formData.image}
+                    onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                    placeholder="Or paste image URL"
+                    disabled={uploadingImage}
+                  />
+                </div>
+
+                <div className="mt-2 space-y-1">
+                  <p className="text-xs text-gray-500">
+                    📐 Recommended size: 800x1000px (4:5 aspect ratio)
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    📦 Max file size: 5MB | Formats: JPG, PNG, WebP
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    🎨 This image will be displayed on the category card on the homepage
+                  </p>
+                </div>
+
+                {formData.image && (
+                  <div className="mt-3">
+                    <p className="text-xs font-medium text-gray-700 mb-2">Preview:</p>
+                    <div className="relative w-full h-40 bg-gradient-to-br from-amber-100 to-orange-100 rounded-lg overflow-hidden">
+                      <img 
+                        src={formData.image} 
+                        alt="Category preview" 
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none'
+                          const nextEl = e.currentTarget.nextElementSibling as HTMLElement
+                          if (nextEl) nextEl.classList.remove('hidden')
+                        }}
+                      />
+                      <div className="hidden absolute inset-0 flex items-center justify-center text-gray-400 bg-gray-100">
+                        <span className="text-sm">Invalid image URL</span>
+                      </div>
+                      {formData.image && (
+                        <button
+                          type="button"
+                          onClick={() => setFormData({ ...formData, image: '' })}
+                          className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-4">

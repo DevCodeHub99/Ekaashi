@@ -84,6 +84,7 @@ export default function ProductPageClient({ product, relatedProducts }: ProductP
   const [quantity, setQuantity] = useState(1)
   const [selectedImageIndex, setSelectedImageIndex] = useState(0)
   const [isWishlisted, setIsWishlisted] = useState(false)
+  const [isWishlistLoading, setIsWishlistLoading] = useState(false)
   const [activeTab, setActiveTab] = useState('description')
   const [isAddingToCart, setIsAddingToCart] = useState(false)
   const [isBuyingNow, setIsBuyingNow] = useState(false)
@@ -298,6 +299,54 @@ export default function ProductPageClient({ product, relatedProducts }: ProductP
     }
   }
 
+  const toggleWishlist = async () => {
+    if (isWishlistLoading) return
+    
+    setIsWishlistLoading(true)
+    
+    try {
+      if (isWishlisted) {
+        // Remove from wishlist
+        const response = await fetch(`/api/wishlist?productId=${product.id}`, {
+          method: 'DELETE'
+        })
+        const data = await response.json()
+        
+        if (data.success) {
+          setIsWishlisted(false)
+          showToast('Removed from wishlist', 'success')
+          // Trigger header refresh
+          window.dispatchEvent(new Event('wishlistUpdated'))
+        }
+      } else {
+        // Add to wishlist
+        const response = await fetch('/api/wishlist', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ productId: product.id })
+        })
+        const data = await response.json()
+        
+        if (data.success) {
+          setIsWishlisted(true)
+          showToast('Added to wishlist!', 'success')
+          // Trigger header refresh
+          window.dispatchEvent(new Event('wishlistUpdated'))
+        } else if (data.error === 'Product already in wishlist') {
+          setIsWishlisted(true)
+          showToast('Already in wishlist', 'success')
+        } else {
+          showToast(data.error || 'Failed to add to wishlist', 'error')
+        }
+      }
+    } catch (error) {
+      console.error('Error toggling wishlist:', error)
+      showToast('Failed to update wishlist', 'error')
+    } finally {
+      setIsWishlistLoading(false)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-white">
       {/* Breadcrumb */}
@@ -407,10 +456,6 @@ export default function ProductPageClient({ product, relatedProducts }: ProductP
                 <span className="text-sm sm:text-base text-gray-600">(4.8)</span>
                 <button className="text-sm sm:text-base text-amber-600 hover:underline cursor-pointer">128 reviews</button>
               </div>
-
-              <p className="text-sm sm:text-base text-gray-600 leading-relaxed">
-                {product.description}
-              </p>
             </div>
 
             {/* Price */}
@@ -535,8 +580,9 @@ export default function ProductPageClient({ product, relatedProducts }: ProductP
                 <div className="flex gap-3 sm:gap-4">
                   <Button
                     variant="outline"
-                    className="flex-1 sm:flex-none px-4 sm:px-6 py-3 sm:py-4 border-2 border-gray-300 hover:border-amber-600 hover:text-amber-600 rounded-xl transition-all duration-300 touch-manipulation"
-                    onClick={() => setIsWishlisted(!isWishlisted)}
+                    className="flex-1 sm:flex-none px-4 sm:px-6 py-3 sm:py-4 border-2 border-gray-300 hover:border-red-500 hover:text-red-500 rounded-xl transition-all duration-300 touch-manipulation"
+                    onClick={toggleWishlist}
+                    disabled={isWishlistLoading}
                   >
                     <Heart className={`h-4 w-4 sm:h-5 sm:w-5 ${isWishlisted ? 'fill-red-500 text-red-500' : ''}`} />
                   </Button>
