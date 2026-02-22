@@ -59,40 +59,34 @@ export async function GET(request: NextRequest) {
 
 // POST - Add item to cart
 export async function POST(request: NextRequest) {
-  console.log('=== POST /api/cart START ===')
   try {
     const session = await getServerSession(authOptions)
-    console.log('Session retrieved:', !!session)
     
     const body = await request.json()
-    console.log('Body parsed:', body)
-    
     const { productId, quantity = 1, sessionId } = body
-    console.log('Extracted values:', { productId, quantity, sessionId })
     
     // We need either a session (logged-in user) OR a sessionId (guest user)
     if (!session && !sessionId) {
-      console.log('No session or sessionId found')
       return NextResponse.json(
-        { success: false, error: 'No session found' },
+        { success: false, error: 'No session found. Please provide sessionId for guest users.' },
         { status: 401 }
       )
     }
 
     if (!productId) {
-      console.log('No productId provided')
       return NextResponse.json(
         { success: false, error: 'Product ID is required' },
         { status: 400 }
       )
     }
 
-    console.log('About to check product in database')
     // Check if product exists and is in stock
     const product = await prisma.product.findUnique({
-      where: { id: productId }
+      where: { id: productId },
+      include: {
+        category: true
+      }
     })
-    console.log('Product found:', !!product)
 
     if (!product) {
       return NextResponse.json(
@@ -108,11 +102,9 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.log('About to handle cart item')
     let cartItem
     
     if (session) {
-      console.log('Using session for logged-in user')
       // For logged-in users - find existing cart item
       const existingCartItem = await prisma.cartItem.findFirst({
         where: {
@@ -154,7 +146,6 @@ export async function POST(request: NextRequest) {
         })
       }
     } else {
-      console.log('Using sessionId for guest user')
       // For guest users - find existing cart item
       const existingCartItem = await prisma.cartItem.findFirst({
         where: {
@@ -197,8 +188,6 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    console.log('Cart item handled successfully')
-
     const response = {
       success: true,
       data: {
@@ -214,12 +203,15 @@ export async function POST(request: NextRequest) {
       message: 'Item added to cart'
     }
     
-    console.log('=== POST /api/cart SUCCESS ===')
     return NextResponse.json(response)
   } catch (error) {
-    console.error('=== POST /api/cart ERROR ===', error)
+    console.error('POST /api/cart ERROR:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to add item to cart' },
+      { 
+        success: false, 
+        error: 'Failed to add item to cart',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      },
       { status: 500 }
     )
   }

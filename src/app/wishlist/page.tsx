@@ -6,6 +6,9 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Heart, ShoppingCart, Trash2, ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { useCart } from '@/contexts/cart-context'
+import { useToast } from '@/components/ui/toast'
+import { getSessionId } from '@/lib/session'
 
 interface WishlistItem {
   id: string
@@ -27,9 +30,12 @@ interface WishlistItem {
 
 export default function WishlistPage() {
   const { data: session } = useSession()
+  const { addItem } = useCart()
+  const { showToast } = useToast()
   const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([])
   const [loading, setLoading] = useState(true)
   const [removingId, setRemovingId] = useState<string | null>(null)
+  const [addingToCartId, setAddingToCartId] = useState<string | null>(null)
 
   useEffect(() => {
     fetchWishlist()
@@ -70,22 +76,30 @@ export default function WishlistPage() {
     }
   }
 
-  const addToCart = async (productId: string) => {
+  const addToCart = async (product: WishlistItem['product']) => {
     try {
-      const response = await fetch('/api/cart', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ productId, quantity: 1 })
-      })
+      setAddingToCartId(product.id)
+      
+      // Use cart context which handles sessionId automatically
+      await addItem({
+        id: product.id,
+        name: product.name,
+        slug: product.slug,
+        price: product.price,
+        comparePrice: product.comparePrice,
+        image: product.images[0] || '',
+        category: product.category.name
+      }, 1)
 
-      const data = await response.json()
-
-      if (data.success) {
-        // Optionally remove from wishlist after adding to cart
-        await removeFromWishlist(productId)
-      }
+      showToast(`${product.name} added to cart!`, 'success')
+      
+      // Optionally remove from wishlist after adding to cart
+      await removeFromWishlist(product.id)
     } catch (error) {
       console.error('Error adding to cart:', error)
+      showToast('Failed to add item to cart', 'error')
+    } finally {
+      setAddingToCartId(null)
     }
   }
 
@@ -188,12 +202,12 @@ export default function WishlistPage() {
                   {/* Actions */}
                   <div className="flex gap-2">
                     <Button
-                      onClick={() => addToCart(item.product.id)}
-                      disabled={!item.product.inStock}
+                      onClick={() => addToCart(item.product)}
+                      disabled={!item.product.inStock || addingToCartId === item.product.id}
                       className="flex-1 bg-amber-600 hover:bg-amber-700 text-white text-sm"
                     >
                       <ShoppingCart className="h-4 w-4 mr-2" />
-                      Add to Cart
+                      {addingToCartId === item.product.id ? 'Adding...' : 'Add to Cart'}
                     </Button>
                     <Button
                       onClick={() => removeFromWishlist(item.product.id)}
