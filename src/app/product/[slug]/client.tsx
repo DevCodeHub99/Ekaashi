@@ -628,12 +628,12 @@ export default function ProductPageClient({ product, relatedProducts }: ProductP
         {/* Product Details Tabs */}
         <div className="mb-12 sm:mb-16">
           <div className="border-b border-gray-200 mb-6 sm:mb-8">
-            <nav className="flex space-x-4 sm:space-x-8 overflow-x-auto scrollbar-hide">
+            <nav className="flex space-x-2 sm:space-x-8 overflow-x-auto scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`py-3 sm:py-4 px-1 border-b-2 font-medium whitespace-nowrap transition-colors text-sm sm:text-base ${
+                  className={`py-3 sm:py-4 px-2 sm:px-1 border-b-2 font-medium whitespace-nowrap transition-colors text-xs sm:text-base flex-shrink-0 ${
                     activeTab === tab.id
                       ? 'border-amber-600 text-amber-600'
                       : 'border-transparent text-gray-500 hover:text-gray-700'
