@@ -6,14 +6,15 @@ const prisma = new PrismaClient()
 // PUT - Update Instagram post
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const body = await request.json()
     const { image, caption, link, isActive, order } = body
 
     const post = await prisma.instagramPost.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         image,
         caption: caption || null,
@@ -39,11 +40,12 @@ export async function PUT(
 // DELETE - Delete Instagram post
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     await prisma.instagramPost.delete({
-      where: { id: params.id }
+      where: { id }
     })
 
     return NextResponse.json({

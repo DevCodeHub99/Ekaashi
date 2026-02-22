@@ -8,9 +8,9 @@ import { notFound } from 'next/navigation'
 export const revalidate = 60
 
 interface ProductPageProps {
-  params: {
+  params: Promise<{
     slug: string
-  }
+  }>
 }
 
 async function getProductBySlug(slug: string) {
