@@ -352,16 +352,17 @@ export default function ProductPageClient({ product, relatedProducts }: ProductP
       {/* Breadcrumb */}
       <div className="bg-gray-50 py-3 sm:py-4">
         <div className="container mx-auto px-4">
-          <nav className="flex items-center gap-x-2 text-xs sm:text-sm overflow-x-auto scrollbar-hide">
-            <Link href="/" className="text-gray-600 hover:text-amber-600 whitespace-nowrap flex-shrink-0">Home</Link>
-            <span className="text-gray-400 flex-shrink-0">/</span>
-            <Link href="/products" className="text-gray-600 hover:text-amber-600 whitespace-nowrap flex-shrink-0">Products</Link>
-            <span className="text-gray-400 flex-shrink-0">/</span>
-            <Link href={`/category/${product.category}`} className="text-gray-600 hover:text-amber-600 capitalize whitespace-nowrap flex-shrink-0">
+          <nav className="flex items-center gap-x-2 text-xs sm:text-sm">
+            <Link href="/" className="text-gray-600 hover:text-amber-600 whitespace-nowrap">Home</Link>
+            <span className="text-gray-400">/</span>
+            <Link href="/products" className="text-gray-600 hover:text-amber-600 whitespace-nowrap">Products</Link>
+            <span className="text-gray-400">/</span>
+            <Link href={`/category/${product.category}`} className="text-gray-600 hover:text-amber-600 capitalize whitespace-nowrap">
               {product.category.replace('-', ' ')}
             </Link>
-            <span className="text-gray-400 flex-shrink-0">/</span>
-            <span className="text-gray-900 font-medium truncate">{product.name}</span>
+            {/* Show product name only on larger screens */}
+            <span className="text-gray-400 hidden sm:inline">/</span>
+            <span className="text-gray-900 font-medium truncate hidden sm:inline">{product.name}</span>
           </nav>
         </div>
       </div>
