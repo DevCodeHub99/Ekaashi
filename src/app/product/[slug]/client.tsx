@@ -349,24 +349,6 @@ export default function ProductPageClient({ product, relatedProducts }: ProductP
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Breadcrumb */}
-      <div className="bg-gray-50 py-3 sm:py-4">
-        <div className="container mx-auto px-4">
-          <nav className="flex items-center gap-x-2 text-xs sm:text-sm">
-            <Link href="/" className="text-gray-600 hover:text-amber-600 whitespace-nowrap">Home</Link>
-            <span className="text-gray-400">/</span>
-            <Link href="/products" className="text-gray-600 hover:text-amber-600 whitespace-nowrap">Products</Link>
-            <span className="text-gray-400">/</span>
-            <Link href={`/category/${product.category}`} className="text-gray-600 hover:text-amber-600 capitalize whitespace-nowrap">
-              {product.category.replace('-', ' ')}
-            </Link>
-            {/* Show product name only on larger screens */}
-            <span className="text-gray-400 hidden sm:inline">/</span>
-            <span className="text-gray-900 font-medium truncate hidden sm:inline">{product.name}</span>
-          </nav>
-        </div>
-      </div>
-
       <div className="container mx-auto px-4 py-6 sm:py-8 lg:py-12">
         {/* Main Product Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-16 mb-12 sm:mb-16">
