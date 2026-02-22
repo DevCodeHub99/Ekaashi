@@ -67,12 +67,21 @@ export default function WishlistPage() {
       const data = await response.json()
 
       if (data.success) {
+        // Update local state
         setWishlistItems(prev => prev.filter(item => item.productId !== productId))
+        // Trigger header refresh
+        window.dispatchEvent(new Event('wishlistUpdated'))
+        showToast('Removed from wishlist', 'success')
+      } else {
+        showToast(data.error || 'Failed to remove from wishlist', 'error')
       }
     } catch (error) {
       console.error('Error removing from wishlist:', error)
+      showToast('Failed to remove from wishlist', 'error')
     } finally {
       setRemovingId(null)
+    }
+  }
     }
   }
 
