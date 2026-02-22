@@ -82,8 +82,6 @@ export default function WishlistPage() {
       setRemovingId(null)
     }
   }
-    }
-  }
 
   const addToCart = async (product: WishlistItem['product']) => {
     try {
