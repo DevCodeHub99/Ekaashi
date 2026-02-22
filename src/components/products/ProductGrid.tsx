@@ -2,6 +2,10 @@
 
 import { useState, useEffect } from 'react'
 import ProductCard from '@/components/ui/product-card'
+import { ErrorBoundary } from '@/components/ui/error-boundary'
+import { ProductGridSkeleton } from '@/components/ui/skeleton'
+import { AlertCircle } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 
 interface Product {
   id: string
@@ -25,7 +29,7 @@ interface ProductGridProps {
   viewAllLink?: string
 }
 
-export default function ProductGrid({ 
+function ProductGridContent({ 
   title, 
   endpoint, 
   limit, 
@@ -40,24 +44,93 @@ export default function ProductGrid({
     const fetchProducts = async () => {
       try {
         setLoading(true)
+        setError(null)
         const response = await fetch(endpoint)
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch: ${response.status}`)
+        }
+        
         const data = await response.json()
         
         if (data.success) {
           const productData = limit ? data.data.slice(0, limit) : data.data
           setProducts(productData)
         } else {
-          setError('Failed to load products')
+          throw new Error(data.error || 'Failed to load products')
         }
       } catch (err) {
         console.error('Error fetching products:', err)
-        setError('Failed to load products')
+        setError(err instanceof Error ? err.message : 'Failed to load products')
       } finally {
         setLoading(false)
       }
     }
 
     fetchProducts()
+  }, [endpoint, limit])
+
+  const handleRetry = () => {
+    setError(null)
+    setLoading(true)
+    // Trigger re-fetch by updating a dependency
+    window.location.reload()
+  }
+
+  if (loading) {
+    return <ProductGridSkeleton count={limit || 4} />
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-12">
+        <div className="inline-flex items-center justify-center w-16 h-16 bg-red-100 rounded-full mb-4">
+          <AlertCircle className="h-8 w-8 text-red-600" />
+        </div>
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">
+          Unable to load products
+        </h3>
+        <p className="text-gray-600 mb-4">{error}</p>
+        <Button
+          onClick={handleRetry}
+          className="bg-amber-600 hover:bg-amber-700 text-white"
+        >
+          Try Again
+        </Button>
+      </div>
+    )
+  }
+
+  if (products.length === 0) {
+    return (
+      <div className="text-center py-12">
+        <div className="text-6xl mb-4">💎</div>
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">
+          No products found
+        </h3>
+        <p className="text-gray-600">
+          Check back soon for new arrivals
+        </p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
+      {products.map((product) => (
+        <ProductCard key={product.id} product={product} />
+      ))}
+    </div>
+  )
+}
+
+export default function ProductGrid(props: ProductGridProps) {
+  return (
+    <ErrorBoundary>
+      <ProductGridContent {...props} />
+    </ErrorBoundary>
+  )
+}
   }, [endpoint, limit])
 
   if (loading) {

@@ -180,8 +180,13 @@
     hyphens: auto;
   }
   
-  /* Mobile-friendly spacing */
+  /* Mobile-friendly touch targets */
   @media (max-width: 768px) {
+    button, a, input, select {
+      min-height: 44px;
+      min-width: 44px;
+    }
+    
     .mobile-padding {
       padding-left: 1rem !important;
       padding-right: 1rem !important;

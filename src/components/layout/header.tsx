@@ -18,19 +18,20 @@ export default function Header() {
   const { data: session, status } = useSession()
   const { totalItems } = useCart()
 
-  // Fetch wishlist count
+  // Fetch combined counts (cart + wishlist) in a single request
   useEffect(() => {
-    fetchWishlistCount()
+    fetchCounts()
     
-    // Listen for wishlist updates
-    const handleWishlistUpdate = () => {
-      fetchWishlistCount()
-    }
+    // Listen for updates
+    const handleWishlistUpdate = () => fetchCounts()
+    const handleCartUpdate = () => fetchCounts()
     
     window.addEventListener('wishlistUpdated', handleWishlistUpdate)
+    window.addEventListener('cartUpdated', handleCartUpdate)
     
     return () => {
       window.removeEventListener('wishlistUpdated', handleWishlistUpdate)
+      window.removeEventListener('cartUpdated', handleCartUpdate)
     }
   }, [session])
 
@@ -46,15 +47,16 @@ export default function Header() {
     }
   }, [isMenuOpen])
 
-  const fetchWishlistCount = async () => {
+  const fetchCounts = async () => {
     try {
-      const response = await fetch('/api/wishlist')
+      const response = await fetch('/api/user/counts')
       const data = await response.json()
       if (data.success) {
-        setWishlistCount(data.data.length)
+        setWishlistCount(data.data.wishlist)
+        // Cart count is managed by CartContext, but we could sync it here if needed
       }
     } catch (error) {
-      console.error('Error fetching wishlist count:', error)
+      console.error('Error fetching counts:', error)
     }
   }
 
