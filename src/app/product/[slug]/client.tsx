@@ -249,9 +249,11 @@ export default function ProductPageClient({ product, relatedProducts }: ProductP
     
     setIsAddingToCart(true)
     try {
+      // Always use the main product ID, not variant ID
+      // The variant info is included in the name
       await addItem({
-        id: selectedVariant ? selectedVariant.id : product.id,
-        name: currentName,
+        id: product.id, // Use main product ID
+        name: currentName, // This includes variant name if selected
         slug: product.slug,
         price: currentPrice,
         comparePrice: currentComparePrice,
@@ -279,10 +281,10 @@ export default function ProductPageClient({ product, relatedProducts }: ProductP
     setIsBuyingNow(true)
     
     try {
-      // Add to cart first
+      // Add to cart first - Always use the main product ID, not variant ID
       await addItem({
-        id: selectedVariant ? selectedVariant.id : product.id,
-        name: currentName,
+        id: product.id, // Use main product ID
+        name: currentName, // This includes variant name if selected
         slug: product.slug,
         price: currentPrice,
         comparePrice: currentComparePrice,

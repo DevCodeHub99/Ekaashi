@@ -155,10 +155,40 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(cartReducer, initialState)
   const { data: session, status } = useSession()
 
-  // Sync cart with database
-  const syncCart = async () => {
+  // Sync cart with database using stale-while-revalidate pattern
+  const syncCart = async (forceRefresh = false) => {
     if (status === 'loading') return
     
+    // Load from localStorage immediately (stale data)
+    if (!forceRefresh) {
+      const savedCart = localStorage.getItem('ekaashi-cart')
+      const cacheTimestamp = localStorage.getItem('ekaashi-cart-timestamp')
+      
+      if (savedCart && cacheTimestamp) {
+        try {
+          const cartItems = JSON.parse(savedCart)
+          const timestamp = parseInt(cacheTimestamp)
+          const now = Date.now()
+          const cacheAge = now - timestamp
+          
+          // If cache is less than 5 minutes old, use it immediately
+          if (cacheAge < 5 * 60 * 1000) {
+            dispatch({ type: 'LOAD_CART', payload: cartItems })
+            
+            // Still revalidate in background if cache is older than 1 minute
+            if (cacheAge > 60 * 1000) {
+              // Background revalidation
+              revalidateCart()
+            }
+            return
+          }
+        } catch (error) {
+          console.error('Error loading cart from localStorage:', error)
+        }
+      }
+    }
+    
+    // If no cache or cache is stale, fetch from server
     dispatch({ type: 'SET_SYNCING', payload: true })
     
     try {
@@ -169,13 +199,14 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         const data = await response.json()
         if (data.success) {
           dispatch({ type: 'SYNC_CART', payload: data.data })
-          // Update localStorage
+          // Update localStorage with fresh data
           localStorage.setItem('ekaashi-cart', JSON.stringify(data.data))
+          localStorage.setItem('ekaashi-cart-timestamp', Date.now().toString())
         }
       }
     } catch (error) {
       console.error('Error syncing cart:', error)
-      // Fallback to localStorage
+      // Fallback to localStorage even if stale
       const savedCart = localStorage.getItem('ekaashi-cart')
       if (savedCart) {
         try {
@@ -188,6 +219,32 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       } else {
         dispatch({ type: 'SET_LOADING', payload: false })
       }
+    }
+  }
+
+  // Background revalidation without showing loading state
+  const revalidateCart = async () => {
+    try {
+      const sessionId = getSessionId()
+      const response = await fetch(`/api/cart?sessionId=${sessionId}`)
+      
+      if (response.ok) {
+        const data = await response.json()
+        if (data.success) {
+          // Silently update cache
+          localStorage.setItem('ekaashi-cart', JSON.stringify(data.data))
+          localStorage.setItem('ekaashi-cart-timestamp', Date.now().toString())
+          
+          // Update state only if data changed
+          const currentItems = JSON.stringify(state.items)
+          const newItems = JSON.stringify(data.data)
+          if (currentItems !== newItems) {
+            dispatch({ type: 'SYNC_CART', payload: data.data })
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error revalidating cart:', error)
     }
   }
 
@@ -221,10 +278,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload)
   }, [state.items, state.isLoading, session])
 
-  // Save to localStorage whenever cart changes
+  // Save to localStorage whenever cart changes (with timestamp)
   useEffect(() => {
     if (!state.isLoading) {
       localStorage.setItem('ekaashi-cart', JSON.stringify(state.items))
+      localStorage.setItem('ekaashi-cart-timestamp', Date.now().toString())
     }
   }, [state.items, state.isLoading])
 

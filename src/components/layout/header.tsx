@@ -15,8 +15,42 @@ export default function Header() {
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [isCategoriesOpen, setIsCategoriesOpen] = useState(false)
   const [wishlistCount, setWishlistCount] = useState(0)
+  const [isScrolled, setIsScrolled] = useState(false)
+  const [isHeaderVisible, setIsHeaderVisible] = useState(true)
+  const [lastScrollY, setLastScrollY] = useState(0)
   const { data: session, status } = useSession()
   const { totalItems } = useCart()
+
+  // Handle scroll behavior for collapsing header
+  useEffect(() => {
+    let ticking = false
+    
+    const handleScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const currentScrollY = window.scrollY
+          
+          // Show/hide header based on scroll direction
+          if (currentScrollY > lastScrollY && currentScrollY > 100) {
+            // Scrolling down & past threshold
+            setIsHeaderVisible(false)
+          } else {
+            // Scrolling up
+            setIsHeaderVisible(true)
+          }
+          
+          // Add shadow when scrolled
+          setIsScrolled(currentScrollY > 10)
+          setLastScrollY(currentScrollY)
+          ticking = false
+        })
+        ticking = true
+      }
+    }
+    
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [lastScrollY])
 
   // Fetch combined counts (cart + wishlist) in a single request
   useEffect(() => {
@@ -65,7 +99,11 @@ export default function Header() {
   }
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 w-full bg-white border-b border-gray-200 shadow-md">
+    <header className={`fixed top-0 left-0 right-0 z-[55] w-full bg-white border-b border-gray-200 transition-all duration-300 ${
+      isScrolled ? 'shadow-md' : 'shadow-sm'
+    } ${
+      isHeaderVisible ? 'translate-y-0' : '-translate-y-full'
+    }`}>
       <div className="container mx-auto px-4">
         <div className="flex h-14 sm:h-16 items-center justify-between">
           {/* Mobile menu button - Left side on mobile */}
@@ -139,7 +177,13 @@ export default function Header() {
                 </Button>
                 
                 {isUserMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+                  <>
+                    {/* Invisible overlay for click-outside on desktop */}
+                    <div 
+                      className="fixed inset-0 z-30"
+                      onClick={() => setIsUserMenuOpen(false)}
+                    ></div>
+                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
                     <div className="px-4 py-2 border-b border-gray-100">
                       <p className="text-sm font-medium text-gray-900 truncate">{session.user?.name}</p>
                       <p className="text-xs text-gray-500 truncate">{session.user?.email}</p>
@@ -184,6 +228,7 @@ export default function Header() {
                       Sign Out
                     </button>
                   </div>
+                  </>
                 )}
               </div>
             ) : (
@@ -208,116 +253,163 @@ export default function Header() {
         </div>
       </div>
 
-      {/* Mobile Sidebar Navigation - Slide from Left */}
-      <div className={`lg:hidden fixed inset-y-0 left-0 z-50 w-72 bg-white shadow-2xl transform transition-transform duration-300 ease-in-out ${isMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-        <div className="flex flex-col h-full">
-          {/* Sidebar Header */}
-          <div className="flex items-center justify-between p-4 border-b border-gray-200">
-            <div className="text-2xl font-bold text-amber-600">EKAASHI</div>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="text-gray-600 hover:text-amber-600 cursor-pointer"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              <X className="h-6 w-6" />
-            </Button>
-          </div>
-
-          {/* Sidebar Content */}
-          <nav className="flex-1 overflow-y-auto py-4">
-            <div className="flex flex-col space-y-1 px-4">
-              {/* Search Button */}
-              <button
-                onClick={() => {
-                  setIsMenuOpen(false)
-                  setIsSearchOpen(true)
-                }}
-                className="flex items-center gap-3 text-base font-medium text-gray-700 hover:text-amber-600 hover:bg-amber-50 transition-colors px-4 py-3 rounded-lg cursor-pointer"
-              >
-                <Search className="h-5 w-5" />
-                <span>Search Products</span>
-              </button>
-              
-              <div className="border-t border-gray-200 my-2"></div>
-              
-              <Link 
-                href="/products" 
-                className="text-base font-medium text-gray-700 hover:text-amber-600 hover:bg-amber-50 transition-colors px-4 py-3 rounded-lg cursor-pointer"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                All
-              </Link>
-              <Link 
-                href="/deals" 
-                className="text-base font-medium text-gray-700 hover:text-amber-600 hover:bg-amber-50 transition-colors px-4 py-3 rounded-lg cursor-pointer"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Deals
-              </Link>
-              <Link 
-                href="/new-arrivals" 
-                className="text-base font-medium text-gray-700 hover:text-amber-600 hover:bg-amber-50 transition-colors px-4 py-3 rounded-lg cursor-pointer"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                New Arrivals ✨
-              </Link>
-              
-              {/* Categories Toggle Section */}
-              <div className="pt-2">
-                <button
-                  onClick={() => setIsCategoriesOpen(!isCategoriesOpen)}
-                  className="w-full flex items-center justify-between text-base font-medium text-gray-700 hover:text-amber-600 hover:bg-amber-50 transition-colors px-4 py-3 rounded-lg cursor-pointer"
+      {/* Mobile Sidebar Navigation - 80% width with dark overlay */}
+      {isMenuOpen && (
+        <>
+          {/* Dark overlay on the right */}
+          <div 
+            className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-[9998]"
+            onClick={() => setIsMenuOpen(false)}
+          />
+          
+          {/* Sidebar */}
+          <div className="lg:hidden fixed inset-y-0 left-0 w-[80%] z-[9999] bg-gray-50 shadow-2xl" style={{ height: '100vh', minHeight: '100vh' }}>
+            <div className="flex flex-col h-full" style={{ height: '100vh' }}>
+              {/* Sidebar Header */}
+              <div className="flex-shrink-0 flex items-center justify-between px-5 py-6 border-b border-gray-200 bg-gray-50" style={{ minHeight: '80px' }}>
+                <div className="text-2xl font-bold text-amber-600">EKAASHI</div>
+                <button 
+                  onClick={() => setIsMenuOpen(false)}
+                  className="p-2 text-gray-600 hover:text-gray-900 cursor-pointer"
+                  aria-label="Close menu"
                 >
-                  <span>Categories</span>
-                  {isCategoriesOpen ? (
-                    <ChevronUp className="h-5 w-5" />
-                  ) : (
-                    <ChevronDown className="h-5 w-5" />
-                  )}
+                  <X className="h-7 w-7" />
+                </button>
+              </div>
+
+              {/* Sidebar Content - Scrollable */}
+              <div className="flex-1 overflow-y-auto px-5 py-4 bg-gray-50">
+                {/* Search Button */}
+                <button
+                  onClick={() => {
+                    setIsMenuOpen(false)
+                    setIsSearchOpen(true)
+                  }}
+                  className="flex items-center gap-3 w-full text-left text-base font-normal py-4 border-b border-gray-300"
+                  style={{ color: '#374151' }}
+                >
+                  <Search className="h-5 w-5" style={{ color: '#374151' }} />
+                  <span>Search Products</span>
                 </button>
                 
-                {/* Collapsible Categories List */}
-                {isCategoriesOpen && (
-                  <div className="mt-1 ml-4 space-y-1" onClick={() => setIsMenuOpen(false)}>
-                    <CategoryNav isMobile={true} />
-                  </div>
+                <Link 
+                  href="/products" 
+                  className="block text-base font-normal py-4 border-b border-gray-300"
+                  onClick={() => setIsMenuOpen(false)}
+                  style={{ color: '#374151' }}
+                >
+                  All
+                </Link>
+                
+                <Link 
+                  href="/deals" 
+                  className="block text-base font-normal py-4 border-b border-gray-300"
+                  onClick={() => setIsMenuOpen(false)}
+                  style={{ color: '#374151' }}
+                >
+                  Deals
+                </Link>
+                
+                <Link 
+                  href="/new-arrivals" 
+                  className="flex items-center gap-2 text-base font-normal py-4 border-b border-gray-300"
+                  onClick={() => setIsMenuOpen(false)}
+                  style={{ color: '#374151' }}
+                >
+                  <span>New Arrivals</span>
+                  <span className="text-base">✨</span>
+                </Link>
+                
+                {/* Categories with Dropdown */}
+                <div className="border-b border-gray-300">
+                  <button
+                    onClick={() => setIsCategoriesOpen(!isCategoriesOpen)}
+                    className="w-full flex items-center justify-between text-base font-normal py-4"
+                    style={{ color: '#374151' }}
+                  >
+                    <span>Categories</span>
+                    {isCategoriesOpen ? (
+                      <ChevronUp className="h-5 w-5" style={{ color: '#374151' }} />
+                    ) : (
+                      <ChevronDown className="h-5 w-5" style={{ color: '#374151' }} />
+                    )}
+                  </button>
+                  
+                  {/* Collapsible Categories */}
+                  {isCategoriesOpen && (
+                    <div className="pb-2 pl-4 space-y-1 bg-gray-50">
+                      <Link 
+                        href="/category/necklaces" 
+                        className="block text-sm font-normal py-3"
+                        onClick={() => setIsMenuOpen(false)}
+                        style={{ color: '#4B5563' }}
+                      >
+                        Necklaces
+                      </Link>
+                      <Link 
+                        href="/category/earrings" 
+                        className="block text-sm font-normal py-3"
+                        onClick={() => setIsMenuOpen(false)}
+                        style={{ color: '#4B5563' }}
+                      >
+                        Earrings
+                      </Link>
+                      <Link 
+                        href="/category/rings" 
+                        className="block text-sm font-normal py-3"
+                        onClick={() => setIsMenuOpen(false)}
+                        style={{ color: '#4B5563' }}
+                      >
+                        Rings
+                      </Link>
+                      <Link 
+                        href="/category/bracelets" 
+                        className="block text-sm font-normal py-3"
+                        onClick={() => setIsMenuOpen(false)}
+                        style={{ color: '#4B5563' }}
+                      >
+                        Bracelets
+                      </Link>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Sidebar Footer - Auth Links */}
+              <div className="flex-shrink-0 border-t border-gray-200 px-5 py-4 space-y-3 bg-gray-50">
+                {!session ? (
+                  <>
+                    <Link 
+                      href="/auth/signin" 
+                      className="block w-full text-center bg-amber-600 hover:bg-amber-700 text-white font-semibold px-6 py-3 rounded-lg transition-colors cursor-pointer"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      Log In
+                    </Link>
+                    <Link 
+                      href="/auth/signup" 
+                      className="block w-full text-center border-2 border-amber-600 text-amber-600 hover:bg-amber-50 font-semibold px-6 py-3 rounded-lg transition-colors cursor-pointer"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      Register
+                    </Link>
+                  </>
+                ) : (
+                  <button 
+                    onClick={() => {
+                      setIsMenuOpen(false)
+                      handleSignOut()
+                    }}
+                    className="w-full text-center border-2 border-red-600 text-red-600 hover:bg-red-50 font-semibold px-6 py-3 rounded-lg transition-colors cursor-pointer flex items-center justify-center gap-2"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    Sign Out
+                  </button>
                 )}
               </div>
             </div>
-          </nav>
-
-          {/* Sidebar Footer - Auth Links */}
-          {!session && (
-            <div className="border-t border-gray-200 p-4 space-y-2">
-              <Link 
-                href="/auth/signin" 
-                className="block w-full text-center bg-amber-600 hover:bg-amber-700 text-white font-medium px-4 py-3 rounded-lg transition-colors cursor-pointer"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Log In
-              </Link>
-              <Link 
-                href="/auth/signup" 
-                className="block w-full text-center border-2 border-amber-600 text-amber-600 hover:bg-amber-50 font-medium px-4 py-3 rounded-lg transition-colors cursor-pointer"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Register
-              </Link>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Overlay - Click outside to close menus */}
-      {(isUserMenuOpen || isMenuOpen) && (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity duration-300" 
-          onClick={() => {
-            setIsUserMenuOpen(false)
-            setIsMenuOpen(false)
-          }}
-        ></div>
+          </div>
+        </>
       )}
 
       {/* Search Modal */}

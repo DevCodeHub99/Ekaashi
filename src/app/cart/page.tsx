@@ -79,8 +79,18 @@ export default function CartPage() {
                       <div key={item.id} className="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-4 p-3 sm:p-4 border border-gray-200 rounded-lg">
                         {/* Product Image */}
                         <div className="flex items-start sm:items-center space-x-3 sm:space-x-4 flex-1">
-                          <div className="flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 rounded-lg flex items-center justify-center">
-                            <div className="text-xl sm:text-2xl">💎</div>
+                          <div className="flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 bg-gray-100 rounded-lg overflow-hidden">
+                            {item.image ? (
+                              <img 
+                                src={item.image} 
+                                alt={item.name}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 flex items-center justify-center">
+                                <div className="text-xl sm:text-2xl">💎</div>
+                              </div>
+                            )}
                           </div>
 
                           {/* Product Details */}

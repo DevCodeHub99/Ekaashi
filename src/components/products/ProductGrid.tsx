@@ -4,8 +4,9 @@ import { useState, useEffect } from 'react'
 import ProductCard from '@/components/ui/product-card'
 import { ErrorBoundary } from '@/components/ui/error-boundary'
 import { ProductGridSkeleton } from '@/components/ui/skeleton'
-import { AlertCircle } from 'lucide-react'
+import { AlertCircle, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { fetchJsonWithRetry } from '@/lib/fetch-with-retry'
 
 interface Product {
   id: string
@@ -39,23 +40,30 @@ function ProductGridContent({
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [retryCount, setRetryCount] = useState(0)
 
   useEffect(() => {
     const fetchProducts = async () => {
       try {
         setLoading(true)
         setError(null)
-        const response = await fetch(endpoint)
         
-        if (!response.ok) {
-          throw new Error(`Failed to fetch: ${response.status}`)
-        }
-        
-        const data = await response.json()
+        const data = await fetchJsonWithRetry<{ success: boolean; data: Product[]; error?: string }>(
+          endpoint,
+          undefined,
+          {
+            maxRetries: 3,
+            onRetry: (attempt, error) => {
+              console.log(`Retry attempt ${attempt} for ${endpoint}:`, error.message)
+              setRetryCount(attempt)
+            }
+          }
+        )
         
         if (data.success) {
           const productData = limit ? data.data.slice(0, limit) : data.data
           setProducts(productData)
+          setRetryCount(0)
         } else {
           throw new Error(data.error || 'Failed to load products')
         }
@@ -72,13 +80,25 @@ function ProductGridContent({
 
   const handleRetry = () => {
     setError(null)
+    setRetryCount(0)
     setLoading(true)
-    // Trigger re-fetch by updating a dependency
-    window.location.reload()
+    // Re-trigger useEffect by forcing a re-render
+    setProducts([])
   }
 
   if (loading) {
-    return <ProductGridSkeleton count={limit || 4} />
+    return (
+      <div>
+        <ProductGridSkeleton count={limit || 4} />
+        {retryCount > 0 && (
+          <div className="text-center mt-4">
+            <p className="text-sm text-gray-600">
+              Retrying... (Attempt {retryCount}/3)
+            </p>
+          </div>
+        )}
+      </div>
+    )
   }
 
   if (error) {
@@ -95,6 +115,7 @@ function ProductGridContent({
           onClick={handleRetry}
           className="bg-amber-600 hover:bg-amber-700 text-white"
         >
+          <RefreshCw className="h-4 w-4 mr-2" />
           Try Again
         </Button>
       </div>
@@ -129,44 +150,5 @@ export default function ProductGrid(props: ProductGridProps) {
     <ErrorBoundary>
       <ProductGridContent {...props} />
     </ErrorBoundary>
-  )
-}
-  }, [endpoint, limit])
-
-  if (loading) {
-    return (
-      <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
-        {[...Array(limit || 8)].map((_, i) => (
-          <div key={i} className="animate-pulse">
-            <div className="aspect-square bg-gradient-to-br from-gray-200 to-gray-300 rounded-lg" />
-            <div className="h-4 bg-gray-200 rounded mt-4" />
-            <div className="h-4 bg-gray-200 rounded mt-2 w-2/3" />
-            <div className="h-8 bg-gray-200 rounded mt-4" />
-          </div>
-        ))}
-      </div>
-    )
-  }
-
-  if (error || products.length === 0) {
-    return (
-      <div className="text-center py-12">
-        <div className="text-6xl mb-4">💎</div>
-        <h3 className="text-xl font-semibold text-gray-900 mb-2">
-          {error || 'No products available'}
-        </h3>
-        <p className="text-gray-600">
-          Check back soon for new arrivals!
-        </p>
-      </div>
-    )
-  }
-
-  return (
-    <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
-      {products.map((product) => (
-        <ProductCard key={product.id} product={product} />
-      ))}
-    </div>
   )
 }

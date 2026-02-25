@@ -21,10 +21,10 @@ export default function Footer() {
             {/* Mobile-First Layout */}
             <div className="space-y-8 sm:space-y-10 lg:space-y-12">
               {/* Useful Links & Information - Mobile: Two Columns, Desktop: Two Columns */}
-              <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:gap-16">
+              <div className="grid grid-cols-2 gap-3 sm:gap-6 lg:gap-16">
                 {/* Useful Links */}
-                <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-4 sm:p-6">
-                  <h3 className="text-base sm:text-xl lg:text-2xl font-light mb-4 sm:mb-6 text-gray-900">Useful Links</h3>
+                <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-3 sm:p-6">
+                  <h3 className="text-sm sm:text-xl lg:text-2xl font-semibold mb-3 sm:mb-6 text-gray-900">Useful Links</h3>
                   <ul className="space-y-2 sm:space-y-3">
                     <li>
                       <Link href="/shipping" className="text-gray-700 hover:text-amber-600 transition-colors text-xs sm:text-base flex items-center cursor-pointer">
@@ -66,8 +66,8 @@ export default function Footer() {
                 </div>
 
                 {/* Information */}
-                <div className="bg-gradient-to-br from-orange-50 to-yellow-50 rounded-xl p-4 sm:p-6">
-                  <h3 className="text-base sm:text-xl lg:text-2xl font-light mb-4 sm:mb-6 text-gray-900">Information</h3>
+                <div className="bg-gradient-to-br from-orange-50 to-yellow-50 rounded-xl p-3 sm:p-6">
+                  <h3 className="text-sm sm:text-xl lg:text-2xl font-semibold mb-3 sm:mb-6 text-gray-900">Information</h3>
                   <ul className="space-y-2 sm:space-y-3">
                     <li>
                       <Link href="/blog" className="text-gray-700 hover:text-amber-600 transition-colors text-xs sm:text-base flex items-center cursor-pointer">
