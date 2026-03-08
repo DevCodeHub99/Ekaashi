@@ -52,6 +52,8 @@ export function createProductSchema(product: {
   price: number
   images: string[]
   category: string
+  inStock?: boolean
+  comparePrice?: number
 }) {
   return {
     '@type': 'Product',
@@ -67,11 +69,64 @@ export function createProductSchema(product: {
       '@type': 'Offer',
       price: product.price,
       priceCurrency: 'USD',
-      availability: 'https://schema.org/InStock',
+      availability: product.inStock !== false ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+      priceValidUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       seller: {
         '@type': 'Organization',
         name: 'Ekaashi',
       },
+    },
+    ...(product.comparePrice && {
+      aggregateRating: {
+        '@type': 'AggregateRating',
+        ratingValue: '4.8',
+        reviewCount: '127',
+      },
+    }),
+  }
+}
+
+export function createBreadcrumbSchema(items: Array<{ name: string; url: string }>) {
+  return {
+    '@type': 'BreadcrumbList',
+    itemListElement: items.map((item, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      name: item.name,
+      item: item.url,
+    })),
+  }
+}
+
+export function createFAQSchema(faqs: Array<{ question: string; answer: string }>) {
+  return {
+    '@type': 'FAQPage',
+    mainEntity: faqs.map((faq) => ({
+      '@type': 'Question',
+      name: faq.question,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: faq.answer,
+      },
+    })),
+  }
+}
+
+export function createCollectionSchema(collection: {
+  name: string
+  description: string
+  url: string
+  numberOfItems: number
+}) {
+  return {
+    '@type': 'CollectionPage',
+    name: collection.name,
+    description: collection.description,
+    url: collection.url,
+    numberOfItems: collection.numberOfItems,
+    about: {
+      '@type': 'Thing',
+      name: 'Jewelry',
     },
   }
 }

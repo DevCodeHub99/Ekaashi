@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 
 interface ProductImageProps {
   src?: string
@@ -8,6 +9,9 @@ interface ProductImageProps {
   className?: string
   fallback?: React.ReactNode
   showLoading?: boolean
+  priority?: boolean
+  width?: number
+  height?: number
 }
 
 export default function ProductImage({ 
@@ -15,7 +19,10 @@ export default function ProductImage({
   alt, 
   className = "w-full h-full object-cover",
   fallback = <span className="text-xl">💎</span>,
-  showLoading = false
+  showLoading = false,
+  priority = false,
+  width = 400,
+  height = 400
 }: ProductImageProps) {
   const [imageError, setImageError] = useState(false)
   const [imageLoaded, setImageLoaded] = useState(false)
@@ -27,12 +34,17 @@ export default function ProductImage({
 
   return (
     <div className="w-full h-full relative">
-      <img
+      <Image
         src={src}
         alt={alt}
+        width={width}
+        height={height}
         className={className}
         onLoad={() => setImageLoaded(true)}
         onError={() => setImageError(true)}
+        priority={priority}
+        quality={85}
+        sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
         style={{ 
           display: imageLoaded ? 'block' : 'none',
           transition: 'opacity 0.2s ease-in-out'

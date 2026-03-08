@@ -13,14 +13,14 @@ interface Product {
   id: string
   name: string
   slug: string
-  description: string
+  description?: string
   price: number
   comparePrice?: number
   images: string[]
   category: string
   categoryName?: string
-  inStock: boolean
-  featured: boolean
+  inStock?: boolean
+  featured?: boolean
 }
 
 interface ProductCardProps {

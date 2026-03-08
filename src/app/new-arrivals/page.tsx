@@ -1,52 +1,8 @@
-import { Metadata } from 'next'
-import { prisma } from '@/lib/prisma'
-import ProductCard from '@/components/ui/product-card'
+'use client'
 
-// ISR: Revalidate every 60 seconds
-export const revalidate = 60
+import InfiniteProductGrid from '@/components/products/InfiniteProductGrid'
 
-export const metadata: Metadata = {
-  title: 'New Arrivals - Ekaashi',
-  description: 'Discover the latest additions to our jewelry collection. Fresh designs in earrings, necklaces, and jewelry sets.',
-}
-
-async function getNewArrivals() {
-  try {
-    const products = await prisma.product.findMany({
-      where: {
-        inStock: true
-      },
-      include: {
-        category: true
-      },
-      take: 12,
-      orderBy: {
-        createdAt: 'desc'
-      }
-    })
-
-    return products.map(product => ({
-      id: product.id,
-      name: product.name,
-      slug: product.slug,
-      description: product.description || '',
-      price: Number(product.price),
-      comparePrice: product.comparePrice ? Number(product.comparePrice) : undefined,
-      images: product.images,
-      category: product.category.slug,
-      categoryName: product.category.name,
-      inStock: product.inStock,
-      featured: product.featured
-    }))
-  } catch (error) {
-    console.error('Error fetching new arrivals:', error)
-    return []
-  }
-}
-
-export default async function NewArrivalsPage() {
-  const newArrivals = await getNewArrivals()
-
+export default function NewArrivalsPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8 text-center">
@@ -64,30 +20,12 @@ export default async function NewArrivalsPage() {
         <div className="text-sm opacity-90">*New items added every week</div>
       </div>
 
-      {/* Filters */}
-      <div className="mb-8 flex flex-wrap gap-4 justify-center">
-        <select className="px-4 py-2 border border-gray-300 rounded-lg">
-          <option>All Categories</option>
-          <option>Party Wear Earrings</option>
-          <option>Ethnic Earrings</option>
-          <option>Casual Earrings</option>
-          <option>Casual Necklace</option>
-          <option>Jewelry Set</option>
-        </select>
-        <select className="px-4 py-2 border border-gray-300 rounded-lg">
-          <option>Sort by</option>
-          <option>Newest First</option>
-          <option>Price: Low to High</option>
-          <option>Price: High to Low</option>
-        </select>
-      </div>
-
-      {/* Products Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {newArrivals.map((product) => (
-          <ProductCard key={product.id} product={product} />
-        ))}
-      </div>
+      {/* Products Grid with Infinite Scroll */}
+      <InfiniteProductGrid 
+        endpoint="/api/products/new-arrivals" 
+        limit={12}
+        emptyMessage="No new arrivals yet. Check back soon!"
+      />
 
       {/* Newsletter Signup */}
       <div className="mt-16 bg-gray-50 rounded-lg p-8 text-center">

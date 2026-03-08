@@ -67,7 +67,11 @@ export default function SignInPage() {
         <div className="bg-white rounded-2xl shadow-xl p-8">
           <form className="space-y-6" onSubmit={handleSubmit}>
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm">
+              <div 
+                className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm"
+                role="alert"
+                aria-live="assertive"
+              >
                 {error}
               </div>
             )}
@@ -90,6 +94,9 @@ export default function SignInPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                   placeholder="Enter your email"
+                  aria-required="true"
+                  aria-invalid={error ? 'true' : 'false'}
+                  aria-describedby={error ? 'email-error' : undefined}
                 />
               </div>
             </div>

@@ -68,6 +68,9 @@ class RateLimiter {
 export const apiRateLimit = new RateLimiter(100, 15 * 60 * 1000) // 100 requests per 15 minutes
 export const authRateLimit = new RateLimiter(5, 15 * 60 * 1000)  // 5 auth attempts per 15 minutes
 export const uploadRateLimit = new RateLimiter(10, 60 * 1000)    // 10 uploads per minute
+export const profileRateLimit = new RateLimiter(10, 15 * 60 * 1000) // 10 profile updates per 15 minutes
+export const passwordRateLimit = new RateLimiter(3, 15 * 60 * 1000) // 3 password changes per 15 minutes
+export const wishlistRateLimit = new RateLimiter(50, 15 * 60 * 1000) // 50 wishlist ops per 15 minutes
 
 // Cleanup expired entries every 5 minutes
 if (typeof window === 'undefined') {
@@ -75,6 +78,9 @@ if (typeof window === 'undefined') {
     apiRateLimit.cleanup()
     authRateLimit.cleanup()
     uploadRateLimit.cleanup()
+    profileRateLimit.cleanup()
+    passwordRateLimit.cleanup()
+    wishlistRateLimit.cleanup()
   }, 5 * 60 * 1000)
 }
 
@@ -97,33 +103,31 @@ export function getClientIP(request: Request): string {
 // Rate limit middleware
 export function withRateLimit(
   rateLimiter: RateLimiter,
-  identifier?: (request: Request) => string
+  handler: (request: Request, ...args: any[]) => Promise<Response>
 ) {
-  return function(handler: Function) {
-    return async function(request: Request, ...args: any[]) {
-      const id = identifier ? identifier(request) : getClientIP(request)
-      
-      if (!rateLimiter.isAllowed(id)) {
-        return new Response(
-          JSON.stringify({
-            success: false,
-            error: 'Rate limit exceeded',
-            retryAfter: Math.ceil((rateLimiter.getResetTime(id) - Date.now()) / 1000)
-          }),
-          {
-            status: 429,
-            headers: {
-              'Content-Type': 'application/json',
-              'X-RateLimit-Limit': rateLimiter['maxRequests'].toString(),
-              'X-RateLimit-Remaining': rateLimiter.getRemainingRequests(id).toString(),
-              'X-RateLimit-Reset': Math.ceil(rateLimiter.getResetTime(id) / 1000).toString(),
-              'Retry-After': Math.ceil((rateLimiter.getResetTime(id) - Date.now()) / 1000).toString()
-            }
+  return async function(request: Request, ...args: any[]): Promise<Response> {
+    const id = getClientIP(request)
+    
+    if (!rateLimiter.isAllowed(id)) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Rate limit exceeded',
+          retryAfter: Math.ceil((rateLimiter.getResetTime(id) - Date.now()) / 1000)
+        }),
+        {
+          status: 429,
+          headers: {
+            'Content-Type': 'application/json',
+            'X-RateLimit-Limit': rateLimiter['maxRequests'].toString(),
+            'X-RateLimit-Remaining': rateLimiter.getRemainingRequests(id).toString(),
+            'X-RateLimit-Reset': Math.ceil(rateLimiter.getResetTime(id) / 1000).toString(),
+            'Retry-After': Math.ceil((rateLimiter.getResetTime(id) - Date.now()) / 1000).toString()
           }
-        )
-      }
-
-      return handler(request, ...args)
+        }
+      )
     }
+
+    return handler(request, ...args)
   }
 }

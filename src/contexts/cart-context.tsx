@@ -292,6 +292,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       dispatch({ type: 'ADD_ITEM', payload: item })
     }
     
+    // Announce to screen readers
+    const announcement = `Added ${qty} ${item.name} to cart`
+    announceToScreenReader(announcement)
+    
     // Trigger cart update event
     window.dispatchEvent(new Event('cartUpdated'))
     
@@ -315,6 +319,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         }
         // Trigger cart update event after revert
         window.dispatchEvent(new Event('cartUpdated'))
+        announceToScreenReader('Failed to add item to cart')
         throw new Error('Failed to add item to cart')
       }
     } catch (error) {
@@ -324,8 +329,15 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   }
 
   const removeItem = async (id: string) => {
+    const itemToRemove = state.items.find(item => item.id === id)
+    
     // Optimistic update
     dispatch({ type: 'REMOVE_ITEM', payload: id })
+    
+    // Announce to screen readers
+    if (itemToRemove) {
+      announceToScreenReader(`Removed ${itemToRemove.name} from cart`)
+    }
     
     // Trigger cart update event
     window.dispatchEvent(new Event('cartUpdated'))
@@ -339,6 +351,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       if (!response.ok) {
         // Revert would be complex here, so we'll just sync
         await syncCart()
+        announceToScreenReader('Failed to remove item from cart')
         throw new Error('Failed to remove item from cart')
       }
     } catch (error) {
@@ -348,8 +361,15 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   }
 
   const updateQuantity = async (id: string, quantity: number) => {
+    const item = state.items.find(item => item.id === id)
+    
     // Optimistic update
     dispatch({ type: 'UPDATE_QUANTITY', payload: { id, quantity } })
+    
+    // Announce to screen readers
+    if (item) {
+      announceToScreenReader(`Updated ${item.name} quantity to ${quantity}`)
+    }
     
     // Trigger cart update event
     window.dispatchEvent(new Event('cartUpdated'))
@@ -369,6 +389,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       if (!response.ok) {
         // Revert would be complex here, so we'll just sync
         await syncCart()
+        announceToScreenReader('Failed to update cart')
         throw new Error('Failed to update cart')
       }
     } catch (error) {
@@ -380,6 +401,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const clearCart = async () => {
     // Optimistic update
     dispatch({ type: 'CLEAR_CART' })
+    
+    // Announce to screen readers
+    announceToScreenReader('Cart cleared')
     
     // Trigger cart update event
     window.dispatchEvent(new Event('cartUpdated'))
@@ -393,12 +417,29 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       if (!response.ok) {
         // Revert would be complex here, so we'll just sync
         await syncCart()
+        announceToScreenReader('Failed to clear cart')
         throw new Error('Failed to clear cart')
       }
     } catch (error) {
       console.error('Error clearing cart:', error)
       throw error
     }
+  }
+
+  // Helper function to announce to screen readers
+  const announceToScreenReader = (message: string) => {
+    const announcement = document.createElement('div')
+    announcement.setAttribute('role', 'status')
+    announcement.setAttribute('aria-live', 'polite')
+    announcement.setAttribute('aria-atomic', 'true')
+    announcement.className = 'sr-only'
+    announcement.textContent = message
+    document.body.appendChild(announcement)
+    
+    // Remove after announcement
+    setTimeout(() => {
+      document.body.removeChild(announcement)
+    }, 1000)
   }
 
   return (

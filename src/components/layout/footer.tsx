@@ -99,6 +99,12 @@ export default function Footer() {
                         <span className="leading-tight">Terms & Conditions</span>
                       </Link>
                     </li>
+                    <li>
+                      <Link href="/refund" className="text-gray-700 hover:text-amber-600 transition-colors text-xs sm:text-base flex items-center cursor-pointer">
+                        <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-amber-600 rounded-full mr-2 sm:mr-3 flex-shrink-0"></span>
+                        <span className="leading-tight">Refund Policy</span>
+                      </Link>
+                    </li>
                   </ul>
                 </div>
               </div>

@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { withRateLimit, apiRateLimit } from '@/lib/rate-limit'
+import { withErrorHandler, successResponse } from '@/lib/api-handler'
+import { addToCartSchema, updateCartSchema } from '@/lib/validations'
 
 // GET - Fetch user's cart
 export async function GET(request: NextRequest) {
@@ -58,12 +61,12 @@ export async function GET(request: NextRequest) {
 }
 
 // POST - Add item to cart
-export async function POST(request: NextRequest) {
-  try {
+export const POST = withRateLimit(apiRateLimit, withErrorHandler(async (request: NextRequest) => {
     const session = await getServerSession(authOptions)
     
     const body = await request.json()
-    const { productId, quantity = 1, sessionId } = body
+    const validated = addToCartSchema.parse(body)
+    const { productId, quantity = 1, sessionId } = validated
     
     // We need either a session (logged-in user) OR a sessionId (guest user)
     if (!session && !sessionId) {
@@ -188,41 +191,25 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const response = {
-      success: true,
-      data: {
-        id: cartItem.product.id,
-        name: cartItem.product.name,
-        slug: cartItem.product.slug,
-        price: Number(cartItem.product.price),
-        comparePrice: cartItem.product.comparePrice ? Number(cartItem.product.comparePrice) : undefined,
-        image: cartItem.product.images[0] || '',
-        category: cartItem.product.category.slug,
-        quantity: cartItem.quantity
-      },
-      message: 'Item added to cart'
-    }
-    
-    return NextResponse.json(response)
-  } catch (error) {
-    console.error('POST /api/cart ERROR:', error)
-    return NextResponse.json(
-      { 
-        success: false, 
-        error: 'Failed to add item to cart',
-        details: error instanceof Error ? error.message : 'Unknown error'
-      },
-      { status: 500 }
-    )
-  }
-}
+    return successResponse({
+      id: cartItem.product.id,
+      name: cartItem.product.name,
+      slug: cartItem.product.slug,
+      price: Number(cartItem.product.price),
+      comparePrice: cartItem.product.comparePrice ? Number(cartItem.product.comparePrice) : undefined,
+      image: cartItem.product.images[0] || '',
+      category: cartItem.product.category.slug,
+      quantity: cartItem.quantity
+    }, 201)
+  })
+)
 
 // PUT - Update cart item quantity
-export async function PUT(request: NextRequest) {
-  try {
+export const PUT = withRateLimit(apiRateLimit, withErrorHandler(async (request: NextRequest) => {
     const session = await getServerSession(authOptions)
     const body = await request.json()
-    const { productId, quantity, sessionId } = body
+    const validated = updateCartSchema.parse(body)
+    const { productId, quantity, sessionId } = validated
 
     if (!session && !sessionId) {
       return NextResponse.json(
@@ -277,28 +264,18 @@ export async function PUT(request: NextRequest) {
       }
     })
 
-    return NextResponse.json({
-      success: true,
-      data: {
-        id: cartItem.product.id,
-        name: cartItem.product.name,
-        slug: cartItem.product.slug,
-        price: Number(cartItem.product.price),
-        comparePrice: cartItem.product.comparePrice ? Number(cartItem.product.comparePrice) : undefined,
-        image: cartItem.product.images[0] || '',
-        category: cartItem.product.category.slug,
-        quantity: cartItem.quantity
-      },
-      message: 'Cart updated'
+    return successResponse({
+      id: cartItem.product.id,
+      name: cartItem.product.name,
+      slug: cartItem.product.slug,
+      price: Number(cartItem.product.price),
+      comparePrice: cartItem.product.comparePrice ? Number(cartItem.product.comparePrice) : undefined,
+      image: cartItem.product.images[0] || '',
+      category: cartItem.product.category.slug,
+      quantity: cartItem.quantity
     })
-  } catch (error) {
-    console.error('Error updating cart:', error)
-    return NextResponse.json(
-      { success: false, error: 'Failed to update cart' },
-      { status: 500 }
-    )
-  }
-}
+  })
+)
 
 // DELETE - Remove item from cart or clear cart
 export async function DELETE(request: NextRequest) {

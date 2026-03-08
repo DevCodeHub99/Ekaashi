@@ -2,52 +2,34 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
+import { withRateLimit, apiRateLimit } from '@/lib/rate-limit'
+import { withErrorHandler, successResponse, APIError } from '@/lib/api-handler'
+import { createOrderSchema } from '@/lib/validations'
 
 // POST - Create new order
-export async function POST(request: NextRequest) {
-  try {
+export const POST = withRateLimit(apiRateLimit, withErrorHandler(async (request: NextRequest) => {
     const session = await getServerSession(authOptions)
     const body = await request.json()
-
-    // Validate required fields
-    const requiredFields = ['email', 'firstName', 'lastName', 'phone', 'address', 'city', 'state', 'zipCode', 'country', 'items']
-    for (const field of requiredFields) {
-      if (!body[field]) {
-        return NextResponse.json(
-          { success: false, error: `${field} is required` },
-          { status: 400 }
-        )
-      }
-    }
-
-    if (!Array.isArray(body.items) || body.items.length === 0) {
-      return NextResponse.json(
-        { success: false, error: 'Order must contain at least one item' },
-        { status: 400 }
-      )
-    }
+    
+    // Validate with Zod schema
+    const validated = createOrderSchema.parse(body)
+    const { items, shippingAddress, paymentMethod } = validated
 
     // Calculate total from items
     let total = 0
     const orderItems = []
 
-    for (const item of body.items) {
+    for (const item of items) {
       const product = await prisma.product.findUnique({
         where: { id: item.productId }
       })
 
       if (!product) {
-        return NextResponse.json(
-          { success: false, error: `Product ${item.productId} not found` },
-          { status: 404 }
-        )
+        throw new APIError(`Product ${item.productId} not found`, 404)
       }
 
       if (!product.inStock) {
-        return NextResponse.json(
-          { success: false, error: `Product ${product.name} is out of stock` },
-          { status: 400 }
-        )
+        throw new APIError(`Product ${product.name} is out of stock`, 400)
       }
 
       const itemTotal = Number(product.price) * item.quantity
@@ -64,15 +46,15 @@ export async function POST(request: NextRequest) {
     const order = await prisma.order.create({
       data: {
         userId: session?.user?.id || null,
-        email: body.email,
-        firstName: body.firstName,
-        lastName: body.lastName,
-        phone: body.phone,
-        address: body.address,
-        city: body.city,
-        state: body.state,
-        zipCode: body.zipCode,
-        country: body.country,
+        email: session?.user?.email || shippingAddress.fullName + '@guest.com',
+        firstName: shippingAddress.fullName.split(' ')[0],
+        lastName: shippingAddress.fullName.split(' ').slice(1).join(' ') || '',
+        phone: shippingAddress.phone,
+        address: shippingAddress.address,
+        city: shippingAddress.city,
+        state: shippingAddress.state,
+        zipCode: shippingAddress.zipCode,
+        country: shippingAddress.country,
         total: total,
         status: 'PENDING',
         items: {
@@ -95,20 +77,9 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    return NextResponse.json({
-      success: true,
-      data: order,
-      message: 'Order placed successfully'
-    })
-
-  } catch (error) {
-    console.error('Error creating order:', error)
-    return NextResponse.json(
-      { success: false, error: 'Failed to create order' },
-      { status: 500 }
-    )
-  }
-}
+    return successResponse(order, 201)
+  })
+)
 
 // GET - Fetch user orders
 export async function GET(request: NextRequest) {

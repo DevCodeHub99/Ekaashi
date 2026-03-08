@@ -82,8 +82,16 @@ export default function SearchModal({ isOpen, onClose }: SearchModalProps) {
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-start justify-center pt-20 sm:pt-24">
-      <div className="bg-white w-full max-w-2xl mx-4 rounded-lg shadow-2xl max-h-[80vh] flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 sm:pt-24">
+      {/* Backdrop */}
+      <div 
+        className="absolute inset-0" 
+        onClick={handleClose}
+        aria-hidden="true"
+      />
+      
+      {/* Modal Content */}
+      <div className="relative bg-white w-full max-w-2xl mx-4 rounded-lg shadow-2xl max-h-[80vh] flex flex-col">
         {/* Search Header */}
         <div className="flex items-center gap-3 p-4 border-b border-gray-200">
           <Search className="h-5 w-5 text-gray-400 flex-shrink-0" />

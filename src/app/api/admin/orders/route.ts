@@ -2,9 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
+import { withRateLimit, apiRateLimit } from '@/lib/rate-limit'
 
 // GET - Fetch all orders (admin only)
-export async function GET(request: NextRequest) {
+export const GET = withRateLimit(apiRateLimit, async (request: NextRequest) => {
   try {
     const session = await getServerSession(authOptions)
     
@@ -52,4 +53,4 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     )
   }
-}
+})

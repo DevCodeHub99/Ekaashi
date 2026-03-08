@@ -1,8 +1,21 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const { searchParams } = new URL(request.url)
+    const page = parseInt(searchParams.get('page') || '1')
+    const limit = parseInt(searchParams.get('limit') || '8')
+    const skip = (page - 1) * limit
+
+    // Get total count for pagination
+    const total = await prisma.product.count({
+      where: {
+        featured: true,
+        inStock: true
+      }
+    })
+
     const products = await prisma.product.findMany({
       where: {
         featured: true,
@@ -11,7 +24,8 @@ export async function GET() {
       include: {
         category: true
       },
-      take: 8,
+      take: limit,
+      skip,
       orderBy: {
         createdAt: 'desc'
       }
@@ -33,14 +47,21 @@ export async function GET() {
 
     return NextResponse.json({
       success: true,
-      data: transformedProducts
+      data: transformedProducts,
+      pagination: {
+        page,
+        limit,
+        total,
+        hasMore: skip + products.length < total
+      }
     })
   } catch (error) {
     console.error('Error fetching featured products:', error)
     return NextResponse.json({
       success: false,
       error: 'Failed to fetch products',
-      data: []
+      data: [],
+      pagination: { page: 1, limit: 8, total: 0, hasMore: false }
     }, { status: 500 })
   }
 }

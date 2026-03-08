@@ -113,8 +113,10 @@ export default function Header() {
               size="icon" 
               className="lg:hidden text-gray-600 hover:text-amber-600 cursor-pointer h-9 w-9 sm:h-10 sm:w-10"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
+              aria-label="Open navigation menu"
+              aria-expanded={isMenuOpen}
             >
-              <Menu className="h-5 w-5 sm:h-6 sm:w-6" />
+              <Menu className="h-5 w-5 sm:h-6 sm:w-6" aria-hidden="true" />
             </Button>
             
             {/* Logo */}
@@ -146,16 +148,22 @@ export default function Header() {
               size="icon" 
               className="text-gray-600 hover:text-amber-600 cursor-pointer h-9 w-9 sm:h-10 sm:w-10"
               onClick={() => setIsSearchOpen(true)}
+              aria-label="Open search"
             >
-              <Search className="h-4 w-4 sm:h-5 sm:w-5" />
+              <Search className="h-4 w-4 sm:h-5 sm:w-5" aria-hidden="true" />
             </Button>
             
             {/* Wishlist Icon with Count */}
             <Link href="/wishlist">
-              <Button variant="ghost" size="icon" className="relative text-gray-600 hover:text-amber-600 cursor-pointer h-9 w-9 sm:h-10 sm:w-10">
-                <Heart className="h-4 w-4 sm:h-5 sm:w-5" />
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="relative text-gray-600 hover:text-amber-600 cursor-pointer h-9 w-9 sm:h-10 sm:w-10"
+                aria-label={`Wishlist, ${wishlistCount} items`}
+              >
+                <Heart className="h-4 w-4 sm:h-5 sm:w-5" aria-hidden="true" />
                 {wishlistCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 sm:-top-1 sm:-right-1 h-4 w-4 rounded-full bg-red-500 text-[10px] sm:text-xs text-white flex items-center justify-center font-bold">
+                  <span className="absolute -top-0.5 -right-0.5 sm:-top-1 sm:-right-1 h-4 w-4 rounded-full bg-red-500 text-[10px] sm:text-xs text-white flex items-center justify-center font-bold" aria-label={`${wishlistCount} items in wishlist`}>
                     {wishlistCount > 99 ? '99+' : wishlistCount}
                   </span>
                 )}
@@ -172,8 +180,11 @@ export default function Header() {
                   size="icon" 
                   className="text-gray-600 hover:text-amber-600 cursor-pointer h-9 w-9 sm:h-10 sm:w-10"
                   onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                  aria-label="User menu"
+                  aria-expanded={isUserMenuOpen}
+                  aria-haspopup="true"
                 >
-                  <User className="h-4 w-4 sm:h-5 sm:w-5" />
+                  <User className="h-4 w-4 sm:h-5 sm:w-5" aria-hidden="true" />
                 </Button>
                 
                 {isUserMenuOpen && (
@@ -233,17 +244,27 @@ export default function Header() {
               </div>
             ) : (
               <Link href="/auth/signin">
-                <Button variant="ghost" size="icon" className="text-gray-600 hover:text-amber-600 cursor-pointer h-9 w-9 sm:h-10 sm:w-10">
-                  <User className="h-4 w-4 sm:h-5 sm:w-5" />
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="text-gray-600 hover:text-amber-600 cursor-pointer h-9 w-9 sm:h-10 sm:w-10"
+                  aria-label="Sign in"
+                >
+                  <User className="h-4 w-4 sm:h-5 sm:w-5" aria-hidden="true" />
                 </Button>
               </Link>
             )}
 
             <Link href="/cart">
-              <Button variant="ghost" size="icon" className="relative text-gray-600 hover:text-amber-600 cursor-pointer h-9 w-9 sm:h-10 sm:w-10">
-                <ShoppingBag className="h-4 w-4 sm:h-5 sm:w-5" />
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="relative text-gray-600 hover:text-amber-600 cursor-pointer h-9 w-9 sm:h-10 sm:w-10"
+                aria-label={`Shopping cart, ${totalItems} items`}
+              >
+                <ShoppingBag className="h-4 w-4 sm:h-5 sm:w-5" aria-hidden="true" />
                 {totalItems > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 sm:-top-1 sm:-right-1 h-4 w-4 rounded-full bg-amber-600 text-[10px] sm:text-xs text-white flex items-center justify-center font-bold">
+                  <span className="absolute -top-0.5 -right-0.5 sm:-top-1 sm:-right-1 h-4 w-4 rounded-full bg-amber-600 text-[10px] sm:text-xs text-white flex items-center justify-center font-bold" aria-label={`${totalItems} items in cart`}>
                     {totalItems > 99 ? '99+' : totalItems}
                   </span>
                 )}
@@ -253,12 +274,12 @@ export default function Header() {
         </div>
       </div>
 
-      {/* Mobile Sidebar Navigation - 80% width with dark overlay */}
+      {/* Mobile Sidebar Navigation - 80% width */}
       {isMenuOpen && (
         <>
-          {/* Dark overlay on the right */}
+          {/* Transparent overlay on the right */}
           <div 
-            className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-[9998]"
+            className="lg:hidden fixed inset-0 z-[9998]"
             onClick={() => setIsMenuOpen(false)}
           />
           

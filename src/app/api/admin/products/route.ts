@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
+import { withRateLimit, apiRateLimit } from '@/lib/rate-limit'
+import { withErrorHandler, successResponse, APIError } from '@/lib/api-handler'
+import { productSchema } from '@/lib/validations'
 
 // GET - Fetch all products
 export async function GET(request: NextRequest) {
@@ -86,99 +89,75 @@ export async function GET(request: NextRequest) {
 }
 
 // POST - Create new product
-export async function POST(request: NextRequest) {
-  try {
-    const session = await getServerSession(authOptions)
-    
-    if (!session || session.user.role !== 'ADMIN') {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      )
-    }
+export const POST = withRateLimit(apiRateLimit, withErrorHandler(async (request: NextRequest) => {
+  const session = await getServerSession(authOptions)
+  
+  if (!session || session.user.role !== 'ADMIN') {
+    throw new APIError('Unauthorized', 401)
+  }
 
-    const body = await request.json()
-    
-    // Validate required fields
-    const requiredFields = ['name', 'description', 'price', 'categoryId', 'sku']
-    for (const field of requiredFields) {
-      if (!body[field]) {
-        return NextResponse.json(
-          { success: false, error: `${field} is required` },
-          { status: 400 }
-        )
-      }
-    }
-
-    // Check if SKU already exists
+  const body = await request.json()
+  
+  // Validate with Zod schema
+  const validated = productSchema.parse(body)
+  
+  // Check if SKU already exists (if provided)
+  if (body.sku) {
     const existingSku = await prisma.product.findUnique({
       where: { sku: body.sku }
     })
 
     if (existingSku) {
-      return NextResponse.json(
-        { success: false, error: 'SKU already exists' },
-        { status: 400 }
-      )
+      throw new APIError('SKU already exists', 400)
     }
-
-    // Generate slug
-    const slug = body.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
-
-    // Create product in database
-    const newProduct = await prisma.product.create({
-      data: {
-        name: body.name,
-        slug: slug,
-        sku: body.sku,
-        description: body.description,
-        specifications: body.specifications || null,
-        careInstructions: body.careInstructions || null,
-        price: parseFloat(body.price),
-        comparePrice: body.comparePrice ? parseFloat(body.comparePrice) : null,
-        images: body.images && body.images.length > 0 ? body.images : [],
-        color: body.color || null,
-        size: body.size || null,
-        material: body.material || null,
-        categoryId: body.categoryId,
-        inStock: body.inStock !== false,
-        featured: body.featured || false,
-        seoTitle: body.seoTitle || body.name,
-        seoDescription: body.seoDescription || body.description
-      },
-      include: {
-        category: true
-      }
-    })
-
-    // Transform response
-    const transformedProduct = {
-      id: newProduct.id,
-      name: newProduct.name,
-      slug: newProduct.slug,
-      sku: newProduct.sku,
-      description: newProduct.description,
-      price: Number(newProduct.price),
-      comparePrice: newProduct.comparePrice ? Number(newProduct.comparePrice) : undefined,
-      images: newProduct.images,
-      category: newProduct.category.slug,
-      categoryName: newProduct.category.name,
-      inStock: newProduct.inStock,
-      featured: newProduct.featured,
-      createdAt: newProduct.createdAt,
-      updatedAt: newProduct.updatedAt
-    }
-
-    return NextResponse.json({
-      success: true,
-      data: transformedProduct,
-      message: 'Product created successfully'
-    })
-  } catch (error) {
-    console.error('Error creating product:', error)
-    return NextResponse.json(
-      { success: false, error: 'Failed to create product' },
-      { status: 500 }
-    )
   }
-}
+
+  // Generate slug
+  const slug = validated.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+
+  // Create product in database
+  const newProduct = await prisma.product.create({
+    data: {
+      name: validated.name,
+      slug: slug,
+      sku: body.sku || `SKU-${Date.now()}`,
+      description: validated.description,
+      specifications: body.specifications || null,
+      careInstructions: body.careInstructions || null,
+      price: validated.price,
+      comparePrice: validated.comparePrice || null,
+      images: validated.images,
+      color: body.color || null,
+      size: body.size || null,
+      material: body.material || null,
+      categoryId: validated.categoryId,
+      inStock: validated.inStock,
+      featured: validated.featured,
+      seoTitle: body.seoTitle || validated.name,
+      seoDescription: body.seoDescription || validated.description
+    },
+    include: {
+      category: true
+    }
+  })
+
+  // Transform response
+  const transformedProduct = {
+    id: newProduct.id,
+    name: newProduct.name,
+    slug: newProduct.slug,
+    sku: newProduct.sku,
+    description: newProduct.description,
+    price: Number(newProduct.price),
+    comparePrice: newProduct.comparePrice ? Number(newProduct.comparePrice) : undefined,
+    images: newProduct.images,
+    category: newProduct.category.slug,
+    categoryName: newProduct.category.name,
+    inStock: newProduct.inStock,
+    featured: newProduct.featured,
+    createdAt: newProduct.createdAt,
+    updatedAt: newProduct.updatedAt
+  }
+
+  return successResponse(transformedProduct, 201)
+}))

@@ -58,6 +58,50 @@ export default function ImageZoom({
     setBackgroundPosition(`${clampedX}% ${clampedY}%`)
   }, [imageLoaded, imageError])
 
+  // Keyboard navigation support
+  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (!imageLoaded || imageError) return
+
+    // Toggle zoom with Enter or Space
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      setIsZooming(prev => !prev)
+    }
+
+    // Arrow keys to move zoom position
+    if (isZooming && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+      e.preventDefault()
+      const [currentX, currentY] = backgroundPosition.split(' ').map(v => parseFloat(v))
+      const step = 10 // Move 10% at a time
+
+      let newX = currentX
+      let newY = currentY
+
+      switch (e.key) {
+        case 'ArrowLeft':
+          newX = Math.max(0, currentX - step)
+          break
+        case 'ArrowRight':
+          newX = Math.min(100, currentX + step)
+          break
+        case 'ArrowUp':
+          newY = Math.max(0, currentY - step)
+          break
+        case 'ArrowDown':
+          newY = Math.min(100, currentY + step)
+          break
+      }
+
+      setBackgroundPosition(`${newX}% ${newY}%`)
+    }
+
+    // Escape to exit zoom
+    if (e.key === 'Escape' && isZooming) {
+      setIsZooming(false)
+      setBackgroundPosition('0% 0%')
+    }
+  }, [imageLoaded, imageError, isZooming, backgroundPosition])
+
   const handleImageLoad = useCallback(() => {
     // Only mark as loaded if src is valid
     if (src && src.trim() !== '' && !src.includes('placeholder')) {
@@ -85,6 +129,10 @@ export default function ImageZoom({
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       onMouseMove={handleMouseMove}
+      onKeyDown={handleKeyDown}
+      tabIndex={shouldShowZoom ? 0 : -1}
+      role="button"
+      aria-label={`${alt}. Press Enter to zoom, arrow keys to navigate when zoomed, Escape to exit zoom.`}
     >
       {/* Normal Image */}
       <div 
@@ -127,13 +175,14 @@ export default function ImageZoom({
             backgroundPosition: backgroundPosition,
             backgroundRepeat: 'no-repeat',
           }}
+          aria-hidden="true"
         />
       )}
 
       {/* Zoom indicator */}
       {shouldShowZoom && showZoomIndicator && (
         <div className="absolute top-2 right-2 bg-black/50 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-20">
-          <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7" />
           </svg>
         </div>
