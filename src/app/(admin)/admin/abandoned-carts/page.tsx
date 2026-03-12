@@ -5,9 +5,6 @@ import { formatPrice } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Mail, Eye, CheckCircle, Clock, DollarSign, ShoppingCart } from 'lucide-react'
 
-// Force dynamic rendering
-export const dynamic = 'force-dynamic'
-
 interface AbandonedCart {
   id: string
   userId?: string
