@@ -101,11 +101,11 @@ export function getClientIP(request: Request): string {
 }
 
 // Rate limit middleware
-export function withRateLimit(
+export function withRateLimit<T extends Request = Request>(
   rateLimiter: RateLimiter,
-  handler: (request: Request, ...args: any[]) => Promise<Response>
+  handler: (request: T, ...args: any[]) => Promise<Response>
 ) {
-  return async function(request: Request, ...args: any[]): Promise<Response> {
+  return async function(request: T, ...args: any[]): Promise<Response> {
     const id = getClientIP(request)
     
     if (!rateLimiter.isAllowed(id)) {
